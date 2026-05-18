@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sovereign Protocol | The Hunt</title>
+    <style>
+        body { background-color: #050505; color: #d4af37; font-family: 'Georgia', serif; text-align: center; margin: 0; padding: 20px; }
+        canvas { border: 2px solid #2a2a2a; box-shadow: 0 0 30px #000; background-color: #111; margin-top: 20px; }
+        #ui-layer { margin-top: 15px; }
+        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
+        input[type="text"] { background: #1a1a1a; border: 1px solid #d4af37; color: #fff; padding: 10px; text-align: center; font-size: 16px; margin-bottom: 20px;}
+        button { background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 10px 20px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
+        button:hover { background: rgba(212, 175, 55, 0.2); }
+        #altar-modal { display: none; position: absolute; top: 30%; left: 50%; transform: translateX(-50%); background: #0a0a0a; border: 1px solid #d4af37; padding: 30px; box-shadow: 0 0 40px #000; z-index: 5; }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h1 style="letter-spacing: 5px; text-transform: uppercase;">The Sovereign Wastes</h1>
+        <p style="color: #8c8c8c; font-style: italic; margin-bottom: 30px;">Enter your identifier to begin the hunt.</p>
+        <input type="text" id="player-name" placeholder="IDENTIFIER" autocomplete="off">
+        <button onclick="startGame()">Enter The Territory</button>
+    </div>
+
+    <div id="altar-modal">
+        <h2 style="margin-top:0;">THE OBSIDIAN ALTAR</h2>
+        <p style="font-size: 14px; color: #8c8c8c;">The Alpha is watching. Upload your visual offering.</p>
+        <input type="file" id="offering-file" accept="image/*" style="margin: 20px 0; color:#fff;">
+        <button onclick="submitOffering()">Submit to the Alpha</button>
+    </div>
+
+    <div id="ui-layer">
+        <h2 id="status-text">Awaiting Deployment...</h2>
+    </div>
+
+    <canvas id="gameCanvas" width="640" height="640"></canvas>
+
+<script>
+    // 1. INITIALIZE FIREBASE (PASTE YOUR CONFIG HERE)
+    const firebaseConfig = {
+    apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
+    authDomain: "sovereignhunt.firebaseapp.com",
+    databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
+    projectId: "sovereignhunt",
+    storageBucket: "sovereignhunt.firebasestorage.app",
+    messagingSenderId: "657296200169",
+    appId: "1:657296200169:web:22a0f9364344e682083b78",
+    measurementId: "G-20Z6PTB38V"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 2. GAME VARIABLES (From Foundation Game Design PDF)
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const TILE_SIZE = 64;
+    const ROWS = 10;
+    const COLS = 10;
+
+    // The Map Array: 0 = Desert, 1 = Ruins (Wall), 2 = Altar
+    const map = [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,1,0,0,0,0,1],
+        [1,0,1,0,0,0,1,1,0,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,0,1,0,2,2,0,1,0,1],
+        [1,0,0,0,2,2,0,0,0,1],
+        [1,0,1,1,0,0,0,1,0,1],
+        [1,0,0,0,0,1,0,0,0,1],
+        [1,0,1,0,0,0,0,1,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+    ];
+
+    let myPlayerId = "";
+    let myName = "";
+    let isAlpha = false;
+    let players = {}; // Stores all multiplayer data
+
+    // 3. START GAME & NETWORK CONNECTION
+    function startGame() {
+        myName = document.getElementById("player-name").value.trim().toUpperCase();
+        if (!myName) return;
+
+        // Check if you are logging in
+        if (myName === "JERRY") {
+            myName = "THE ALPHA";
+            isAlpha = true;
+        }
+
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("status-text").innerText = `Tracking Active: ${myName}`;
+
+        // Create player in Firebase Database
+        myPlayerId = "player_" + Math.floor(Math.random() * 100000);
+        const startX = isAlpha ? 4 : 1; // Alpha spawns at center, wolves at edge
+        const startY = isAlpha ? 4 : 1;
+
+        db.ref("players/" + myPlayerId).set({
+            name: myName,
+            x: startX,
+            y: startY,
+            isAlpha: isAlpha
+        });
+
+        // Delete player on disconnect
+        db.ref("players/" + myPlayerId).onDisconnect().remove();
+
+        // Listen for all players moving
+        db.ref("players").on("value", (snapshot) => {
+            players = snapshot.val() || {};
+            drawGame();
+        });
+
+        // Start listening for keyboard movement
+        window.addEventListener("keydown", handleKeydown);
+    }
+
+    // 4. MOVEMENT & COLLISIONS
+    function handleKeydown(e) {
+        if (!players[myPlayerId]) return;
+        let newX = players[myPlayerId].x;
+        let newY = players[myPlayerId].y;
+
+        if (e.key === "ArrowUp" || e.key === "w") newY--;
+        if (e.key === "ArrowDown" || e.key === "s") newY++;
+        if (e.key === "ArrowLeft" || e.key === "a") newX--;
+        if (e.key === "ArrowRight" || e.key === "d") newX++;
+
+        // Boundary and Wall Collision Check
+        if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS) {
+            if (map[newY][newX] !== 1) { // 1 is a wall
+                // Move player in Firebase
+                db.ref("players/" + myPlayerId).update({ x: newX, y: newY });
+                
+                // Check if they stepped on the Altar (2)
+                if (map[newY][newX] === 2 && !isAlpha) {
+                    document.getElementById("altar-modal").style.display = "block";
+                } else {
+                    document.getElementById("altar-modal").style.display = "none";
+                }
+            }
+        }
+    }
+
+    // 5. RENDER THE GAME (HTML5 CANVAS)
+    function drawGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Map
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = 0; col < COLS; col++) {
+                let tile = map[row][col];
+                if (tile === 1) {
+                    ctx.fillStyle = "#1a1a1a"; // Ruins/Walls
+                } else if (tile === 2) {
+                    ctx.fillStyle = "#330000"; // Obsidian Altar
+                } else {
+                    ctx.fillStyle = "#0f0f0f"; // Desert Sand
+                }
+                ctx.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                ctx.strokeStyle = "#151515";
+                ctx.strokeRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            }
+        }
+
+        // Draw Multiplayer Avatars
+        for (let id in players) {
+            let p = players[id];
+            
+            // Draw Player Square
+            ctx.fillStyle = p.isAlpha ? "#d4af37" : "#555555"; // Gold for Alpha, Gray for Wolves
+            ctx.fillRect((p.x * TILE_SIZE) + 16, (p.y * TILE_SIZE) + 16, 32, 32);
+
+            // Draw Name Tag
+            ctx.fillStyle = p.isAlpha ? "#d4af37" : "#ffffff";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(p.name, (p.x * TILE_SIZE) + 32, (p.y * TILE_SIZE) + 10);
+        }
+    }
+
+    // 6. SUBMIT OFFERING
+    function submitOffering() {
+        const file = document.getElementById("offering-file").files[0];
+        if (file) {
+            document.getElementById("altar-modal").innerHTML = "<h3 style='color:#00ff00;'>OFFERING TRANSMITTED.</h3><p style='color:#fff'>The Queen is reviewing. Return to the wastes.</p>";
+            setTimeout(() => {
+                document.getElementById("altar-modal").style.display = "none";
+                // Teleport them slightly away from the altar
+                db.ref("players/" + myPlayerId).update({ x: 1, y: 1 });
+            }, 3000);
+        }
+    }
+</script>
+</body>
+</html>
