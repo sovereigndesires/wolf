@@ -7,35 +7,33 @@
     <style>
         body { background-color: #050505; color: #d4af37; font-family: 'Georgia', serif; text-align: center; margin: 0; padding: 0; overflow: hidden; touch-action: none; }
         
-        /* The Alpha's Broadcast */
-        #alpha-broadcast { background: rgba(20, 0, 0, 0.9); border-bottom: 2px solid #8a0303; color: #ff3333; padding: 10px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; text-shadow: 1px 1px 5px #000; z-index: 10; position: relative; min-height: 20px;}
+        #alpha-broadcast { position: absolute; top: 0; left: 0; width: 100%; background: rgba(20, 0, 0, 0.85); border-bottom: 2px solid #8a0303; color: #ff3333; padding: 10px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; text-shadow: 1px 1px 5px #000; z-index: 15; box-sizing: border-box;}
         
-        /* Responsive Canvas */
-        canvas { background-color: #0a0a0a; border-bottom: 2px solid #2a2a2a; max-width: 100vw; max-height: 65vh; width: 100%; object-fit: contain; margin-top: 5px;}
+        /* Full Screen Canvas */
+        canvas { background-color: #050505; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; box-shadow: inset 0 0 100px #000;}
         
-        #ui-layer { position: absolute; top: 50px; width: 100%; text-align: center; pointer-events: none; text-shadow: 2px 2px 4px #000; z-index: 5;}
+        #ui-layer { position: absolute; top: 50px; width: 100%; text-align: center; pointer-events: none; text-shadow: 2px 2px 4px #000; z-index: 10;}
         
-        /* Menus */
         .fullscreen-menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
         input[type="text"] { background: #1a1a1a; border: 1px solid #d4af37; color: #fff; padding: 12px; text-align: center; font-size: 16px; margin-bottom: 20px; width: 80%; max-width: 300px;}
         button { background: rgba(10, 10, 10, 0.9); border: 1px solid #d4af37; color: #d4af37; padding: 12px 25px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; margin: 5px; }
         button:hover { background: rgba(212, 175, 55, 0.2); }
-        .combat-btn { border-color: #8a0303; color: #ff3333; }
-        .combat-btn:active { background: rgba(138, 3, 3, 0.4); }
         
         #altar-modal { display: none; position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(10,10,10,0.95); border: 1px solid #d4af37; padding: 30px; box-shadow: 0 0 40px #000; z-index: 15; width: 85%; max-width: 400px; }
         
-        /* Mobile Controls */
-        #controls-container { display: flex; justify-content: space-around; align-items: center; margin-top: 10px; max-width: 600px; margin-left: auto; margin-right: auto;}
-        #d-pad { display: grid; grid-template-columns: 50px 50px 50px; grid-template-rows: 50px 50px 50px; gap: 5px; }
-        .d-btn { background: rgba(26, 26, 26, 0.8); border: 1px solid #333; color: #555; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 20px; user-select: none; cursor: pointer;}
-        .d-btn:active { background: rgba(212, 175, 55, 0.5); color: #fff; border-color: #d4af37; }
+        /* Overlay Controls on Play Area */
+        #controls-overlay { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; justify-content: center; align-items: center; gap: 40px; z-index: 10; width: 100%; max-width: 600px; }
+        #d-pad { display: grid; grid-template-columns: 55px 55px 55px; grid-template-rows: 55px 55px 55px; gap: 5px; }
+        .d-btn { background: rgba(20, 20, 20, 0.85); border: 1px solid #d4af37; color: #d4af37; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 24px; user-select: none; cursor: pointer; box-shadow: 0 0 10px #000;}
+        .d-btn:active { background: rgba(212, 175, 55, 0.6); color: #fff; }
         #btn-up { grid-column: 2; grid-row: 1; }
         #btn-left { grid-column: 1; grid-row: 2; }
         #btn-down { grid-column: 2; grid-row: 3; }
         #btn-right { grid-column: 3; grid-row: 2; }
         
-        /* Alpha Dashboard */
+        .combat-btn { background: rgba(20, 0, 0, 0.85); border: 2px solid #ff3333; color: #ff3333; border-radius: 50%; height: 90px; width: 90px; font-size: 16px; box-shadow: 0 0 15px rgba(255,51,51,0.3); cursor: pointer;}
+        .combat-btn:active { background: rgba(255, 51, 51, 0.6); color: #fff;}
+        
         #alpha-dashboard { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:#050505; z-index: 30; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .alpha-console-panel { border: 1px solid #d4af37; padding: 15px; margin-bottom: 20px; background: #0a0a0a; }
         .offering-card { border: 1px solid #8a0303; padding: 15px; margin-bottom: 20px; background: #110000; }
@@ -68,9 +66,14 @@
         <p style="color: #d4af37; border: 1px solid #d4af37; padding: 15px; margin-top: 20px;">INVITATION: Sovereign Suite. Awaiting further coordinates.</p>
     </div>
 
+    <div id="rejected-screen" class="fullscreen-menu" style="display: none;">
+        <h1 style="color: #ea4335; letter-spacing: 3px;">OFFERING REJECTED</h1>
+        <p style="color: #fff; max-width: 400px; line-height: 1.6;">Your offering was deemed unworthy by the Alpha. You have been banished.</p>
+        <button onclick="acknowledgeRejection()">RETURN TO WASTES</button>
+    </div>
+
     <div id="alpha-dashboard">
         <h1 style="border-bottom: 1px solid #d4af37; padding-bottom: 10px;">THE ALPHA'S DEN</h1>
-        
         <div class="alpha-console-panel">
             <h3 style="margin-top:0;">BROADCAST COMMAND</h3>
             <p style="font-size: 12px; color: #8c8c8c;">Update the mandate displayed to all lone wolves.</p>
@@ -78,26 +81,23 @@
             <button onclick="updateAlphaMessage()">BROADCAST TO PACK</button>
             <button onclick="document.getElementById('alpha-dashboard').style.display='none'">RETURN TO MAP</button>
         </div>
-
         <h3 style="margin-top: 30px;">PENDING OFFERINGS</h3>
         <div id="offerings-list"></div>
     </div>
 
     <div id="altar-modal">
-        <h2 style="margin-top:0;">THE OBSIDIAN ALTAR</h2>
-        <p style="font-size: 14px; color: #8c8c8c;">The Alpha is watching. Upload your visual offering.</p>
+        <h2 style="margin-top:0;">THE INNER SANCTUM</h2>
+        <p style="font-size: 14px; color: #8c8c8c;">You have reached the Alpha's throne. Leave your visual offering.</p>
         <input type="file" id="offering-file" accept="image/*" style="margin: 20px 0; color:#fff; width: 100%;">
         <button onclick="submitOffering()">Submit to the Alpha</button>
         <button onclick="document.getElementById('altar-modal').style.display='none'">Walk Away</button>
     </div>
 
-    <div id="ui-layer">
-        <h3 id="status-text" style="margin:0;"></h3>
-    </div>
+    <div id="ui-layer"><h3 id="status-text" style="margin:0;"></h3></div>
 
-    <canvas id="gameCanvas" width="1250" height="1250"></canvas>
+    <canvas id="gameCanvas" width="1000" height="800"></canvas>
 
-    <div id="controls-container">
+    <div id="controls-overlay">
         <div id="d-pad">
             <div class="d-btn" id="btn-up" onclick="move('up')">▲</div>
             <div class="d-btn" id="btn-left" onclick="move('left')">◀</div>
@@ -105,14 +105,14 @@
             <div class="d-btn" id="btn-right" onclick="move('right')">▶</div>
         </div>
         <div>
-            <button class="combat-btn" onclick="attack()" style="height: 80px; width: 80px; border-radius: 50%; font-size: 12px;">STRIKE</button>
+            <button class="combat-btn" onclick="attack()">BITE</button>
         </div>
     </div>
 
 <script>
-    // 1. INITIALIZE FIREBASE
+    // 1. INITIALIZE FIREBASE (PASTE YOUR CONFIG HERE)
     const firebaseConfig = {
-	apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
+  	apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
   	authDomain: "sovereignhunt.firebaseapp.com",
   	databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
   	projectId: "sovereignhunt"
@@ -120,53 +120,73 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. ASSETS & VARIABLES (Expanded Map)
+    // --- THE WHITELIST ---
+    // Only these identifiers are allowed to enter the server. Add names here as you grow the pack.
+    const WHITELIST = {
+        "JERRY": true,
+        "AMANDA": true
+    };
+
+    // 2. ASSETS & MASSIVE 100x100 MAP
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
+    
+    // Auto-resize canvas to window
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
     const TILE_SIZE = 50; 
-    const ROWS = 25;
-    const COLS = 25;
+    const COLS = 100; // 4x Larger Arena
+    const ROWS = 100;
 
     const imgAlpha = new Image(); imgAlpha.src = "alpha.jpg";
     const imgLone = new Image(); imgLone.src = "lone.jpg";
 
-    // 25x25 Expanded Wastes
-    const map = [
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        [1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
-        [1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1],
-        [1,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1],
-        [1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1],
-        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
-        [1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1],
-        [1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1],
-        [1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
-        [1,0,1,0,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1,0,1],
-        [1,0,0,0,1,0,0,0,1,0,0,1,0,1,0,0,1,0,0,0,0,0,1,0,1],
-        [1,1,1,0,1,0,1,0,1,2,2,1,0,1,2,2,1,0,1,1,1,0,1,0,1],
-        [1,0,0,0,0,0,1,0,1,2,2,1,0,1,2,2,1,0,1,0,0,0,1,0,1],
-        [1,0,1,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,0,1,1,1,0,1],
-        [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1],
-        [1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1],
-        [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
-        [1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1],
-        [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
-        [1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1],
-        [1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1],
-        [1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1],
-        [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-    ];
+    let map = [];
+    // Generate massive wastes
+    for(let r=0; r<ROWS; r++){
+        let row = [];
+        for(let c=0; c<COLS; c++){
+            if(r===0 || r===ROWS-1 || c===0 || c===COLS-1) row.push(1); // Border
+            else if(Math.random() < 0.08) row.push(1); // Cactus Obstacles (8% density)
+            else row.push(0); // Sand
+        }
+        map.push(row);
+    }
+
+    // Carve out The Alpha's Den in the center (from 45 to 55)
+    for(let r=45; r<=55; r++){
+        for(let c=45; c<=55; c++){
+            if (r===45 || r===55 || c===45 || c===55) map[r][c] = 1; // Den Outer Wall
+            else map[r][c] = 2; // Den Inner Floor
+        }
+    }
+    // Entrance (South opening)
+    map[55][50] = 2; map[55][49] = 2; map[55][51] = 2;
+    // Throne/Altar
+    map[50][50] = 3;
 
     let myPlayerId = "";
     let myName = "";
     let isAlpha = false;
     let players = {}; 
+    let rabbits = {};
+    
+    // Distant spawn corners
+    const corners = [[5,5], [94,5], [5,94], [94,94]];
 
     function startGame() {
         myName = document.getElementById("player-name").value.trim().toUpperCase();
-        if (!myName) return;
+        
+        // Security Gate
+        if (!WHITELIST[myName]) {
+            alert("ACCESS DENIED. Your identifier is not recognized by the Alpha's protocol.");
+            return;
+        }
 
         if (myName === "JERRY") {
             myName = "THE ALPHA";
@@ -177,38 +197,68 @@
         document.getElementById("login-screen").style.display = "none";
         myPlayerId = "player_" + Math.floor(Math.random() * 100000);
         
-        // Alpha spawns center, wolves randomly edge
-        const startX = isAlpha ? 12 : 1; 
-        const startY = isAlpha ? 13 : 1;
+        let spawn = isAlpha ? [50,50] : corners[Math.floor(Math.random() * corners.length)];
 
         db.ref("players/" + myPlayerId).set({
             name: myName,
-            x: startX,
-            y: startY,
+            x: spawn[0],
+            y: spawn[1],
             isAlpha: isAlpha,
             status: "playing",
             hp: 100,
-            offering: ""
+            offering: "",
+            biteTarget: null
         });
 
         db.ref("players/" + myPlayerId).onDisconnect().remove();
 
-        // Listen for all players
         db.ref("players").on("value", (snapshot) => {
             players = snapshot.val() || {};
             checkMyState(); 
             if(isAlpha) renderAlphaDashboard();
-            drawGame(); 
         });
 
-        // Listen for the Alpha's Broadcast
+        // Initialize Rabbits if none exist
+        db.ref("rabbits").once("value", snap => {
+            if (!snap.exists()) {
+                let initRabbits = {};
+                for(let i=0; i<40; i++) { // Spawn 40 rabbits
+                    initRabbits["rabbit_"+i] = { x: Math.floor(Math.random()*90)+5, y: Math.floor(Math.random()*90)+5 };
+                }
+                db.ref("rabbits").set(initRabbits);
+            }
+        });
+
+        db.ref("rabbits").on("value", snap => {
+            rabbits = snap.val() || {};
+        });
+
         db.ref("settings/alphaMessage").on("value", (snapshot) => {
             const msg = snapshot.val();
             if (msg) document.getElementById("alpha-broadcast").innerText = msg;
         });
 
         window.addEventListener("keydown", handleKeydown);
-        drawGame();
+        requestAnimationFrame(gameLoop);
+        
+        // Decentralized Rabbit Wandering
+        setInterval(wanderRabbits, 2000);
+    }
+
+    function wanderRabbits() {
+        if (!players[myPlayerId] || players[myPlayerId].status !== 'playing') return;
+        let rabbitKeys = Object.keys(rabbits);
+        if (rabbitKeys.length > 0 && Math.random() < 0.3) {
+             let rKey = rabbitKeys[Math.floor(Math.random() * rabbitKeys.length)];
+             let rb = rabbits[rKey];
+             let moveDir = Math.floor(Math.random() * 4);
+             let nx = rb.x, ny = rb.y;
+             if (moveDir===0) nx++; if (moveDir===1) nx--;
+             if (moveDir===2) ny++; if (moveDir===3) ny--;
+             if (nx>0 && nx<COLS-1 && ny>0 && ny<ROWS-1 && map[ny][nx] !== 1) {
+                 db.ref("rabbits/" + rKey).update({x: nx, y: ny});
+             }
+        }
     }
 
     function updateAlphaMessage() {
@@ -222,9 +272,9 @@
         if (!myData) return;
 
         if (myData.hp <= 0 && myData.status === "playing") {
-            // Defeated in combat. Respawn.
-            db.ref("players/" + myPlayerId).update({ hp: 100, x: 1, y: 1 });
-            alert("You have been defeated by a rival. The Alpha is disappointed. Start over.");
+            let spawn = corners[Math.floor(Math.random() * corners.length)];
+            db.ref("players/" + myPlayerId).update({ hp: 100, x: spawn[0], y: spawn[1] });
+            alert("FATAL BITE. You have been dominated by a rival and banished to the edge of the wastes.");
         }
 
         if (myData.status === "review") {
@@ -233,10 +283,25 @@
         } else if (myData.status === "accepted") {
             document.getElementById("lock-screen").style.display = "none";
             document.getElementById("victory-screen").style.display = "flex";
+        } else if (myData.status === "rejected") {
+            document.getElementById("lock-screen").style.display = "none";
+            document.getElementById("rejected-screen").style.display = "flex";
         } else if (myData.status === "playing") {
             document.getElementById("lock-screen").style.display = "none";
             document.getElementById("victory-screen").style.display = "none";
+            document.getElementById("rejected-screen").style.display = "none";
         }
+    }
+
+    function acknowledgeRejection() {
+        let spawn = corners[Math.floor(Math.random() * corners.length)];
+        db.ref("players/" + myPlayerId).update({ 
+            status: "playing", 
+            x: spawn[0], 
+            y: spawn[1],
+            hp: 100,
+            offering: ""
+        });
     }
 
     function handleKeydown(e) {
@@ -244,7 +309,7 @@
         if (e.key === "ArrowDown" || e.key === "s") move('down');
         if (e.key === "ArrowLeft" || e.key === "a") move('left');
         if (e.key === "ArrowRight" || e.key === "d") move('right');
-        if (e.key === " ") attack(); // Spacebar to attack
+        if (e.key === " ") attack(); 
     }
 
     function move(dir) {
@@ -259,9 +324,9 @@
 
         if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS) {
             if (map[newY][newX] !== 1) { 
-                db.ref("players/" + myPlayerId).update({ x: newX, y: newY });
+                db.ref("players/" + myPlayerId).update({ x: newX, y: newY, biteTarget: null }); 
                 
-                if (map[newY][newX] === 2 && !isAlpha) {
+                if (map[newY][newX] === 3 && !isAlpha) {
                     document.getElementById("altar-modal").style.display = "block";
                 } else {
                     document.getElementById("altar-modal").style.display = "none";
@@ -270,78 +335,158 @@
         }
     }
 
-    // COMBAT SYSTEM
     function attack() {
         if (!players[myPlayerId] || players[myPlayerId].status !== "playing" || isAlpha) return;
         let myX = players[myPlayerId].x;
         let myY = players[myPlayerId].y;
+        let didHit = false;
 
-        // Visual feedback for striking
-        ctx.fillStyle = "rgba(138, 3, 3, 0.5)";
-        ctx.fillRect((myX - 1) * TILE_SIZE, (myY - 1) * TILE_SIZE, TILE_SIZE * 3, TILE_SIZE * 3);
-
+        // Check Players
         for (let id in players) {
-            if (id !== myPlayerId) {
-                let p = players[id];
-                if (p.status === "playing" && !p.isAlpha) {
-                    // Check if target is within 1 tile radius
-                    if (Math.abs(p.x - myX) <= 1 && Math.abs(p.y - myY) <= 1) {
-                        let newHp = p.hp - 25; // 4 hits to kill
-                        db.ref("players/" + id).update({ hp: newHp });
-                    }
+            if (id !== myPlayerId && players[id].status === "playing" && !players[id].isAlpha) {
+                if (Math.abs(players[id].x - myX) <= 1 && Math.abs(players[id].y - myY) <= 1) {
+                    db.ref("players/" + id).update({ hp: players[id].hp - 35 });
+                    didHit = true;
+                    db.ref("players/" + myPlayerId).update({ biteTarget: {x: players[id].x, y: players[id].y, time: Date.now()} });
                 }
             }
         }
+
+        // Check Rabbits (Easy Kills for HP)
+        for (let rKey in rabbits) {
+            let rb = rabbits[rKey];
+            if (Math.abs(rb.x - myX) <= 1 && Math.abs(rb.y - myY) <= 1) {
+                // Kill rabbit, restore 20 HP, respawn rabbit
+                let newHp = Math.min(100, players[myPlayerId].hp + 20);
+                db.ref("players/" + myPlayerId).update({ hp: newHp, biteTarget: {x: rb.x, y: rb.y, time: Date.now()} });
+                db.ref("rabbits/" + rKey).update({ x: Math.floor(Math.random()*90)+5, y: Math.floor(Math.random()*90)+5 });
+                didHit = true;
+            }
+        }
+        
+        if(!didHit) {
+             db.ref("players/" + myPlayerId).update({ biteTarget: {x: myX, y: myY-1, time: Date.now()} });
+        }
+    }
+
+    function gameLoop() {
+        if (players[myPlayerId]) drawGame();
+        requestAnimationFrame(gameLoop);
     }
 
     function drawGame() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        let me = players[myPlayerId];
+        let camX = (me.x * TILE_SIZE) - (canvas.width / 2) + (TILE_SIZE / 2);
+        let camY = (me.y * TILE_SIZE) - (canvas.height / 2) + (TILE_SIZE / 2);
+        
+        camX = Math.max(0, Math.min(camX, COLS * TILE_SIZE - canvas.width));
+        camY = Math.max(0, Math.min(camY, ROWS * TILE_SIZE - canvas.height));
+
+        // Parallax Moon
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(canvas.width - 80, 80, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#050505"; // Shadow for crescent
+        ctx.beginPath();
+        ctx.arc(canvas.width - 95, 70, 35, 0, Math.PI * 2);
+        ctx.fill();
+
         for (let row = 0; row < ROWS; row++) {
             for (let col = 0; col < COLS; col++) {
-                let tile = map[row][col];
-                if (tile === 1) { ctx.fillStyle = "#1a1a1a"; } 
-                else if (tile === 2) { ctx.fillStyle = "#330000"; } 
-                else { ctx.fillStyle = "#0f0f0f"; }
-                ctx.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                ctx.strokeStyle = "#151515";
-                ctx.strokeRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                let drawX = (col * TILE_SIZE) - camX;
+                let drawY = (row * TILE_SIZE) - camY;
+
+                if (drawX > -TILE_SIZE && drawX < canvas.width && drawY > -TILE_SIZE && drawY < canvas.height) {
+                    let tile = map[row][col];
+                    
+                    ctx.fillStyle = "#0f0f0f"; // Base Sand
+                    ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    ctx.strokeStyle = "#121212";
+                    ctx.strokeRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+
+                    if (tile === 1) { 
+                        // Draw Cactus instead of a box
+                        ctx.fillStyle = "#1a331a"; // Dark desert green
+                        ctx.fillRect(drawX + 20, drawY + 10, 10, 40); // Main stem
+                        ctx.fillRect(drawX + 10, drawY + 20, 10, 15); // Left arm
+                        ctx.fillRect(drawX + 30, drawY + 15, 10, 15); // Right arm
+                    } 
+                    else if (tile === 2) { 
+                        ctx.fillStyle = "#110a0a"; // Den Floor
+                        ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    } 
+                    else if (tile === 3) { 
+                        ctx.fillStyle = "#4a0000"; // Throne
+                        ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    }
+                }
             }
         }
 
+        // Draw Rabbits (Small white/grey dots)
+        for (let rKey in rabbits) {
+            let rb = rabbits[rKey];
+            let drawX = (rb.x * TILE_SIZE) - camX;
+            let drawY = (rb.y * TILE_SIZE) - camY;
+            if (drawX > -50 && drawX < canvas.width && drawY > -50 && drawY < canvas.height) {
+                ctx.fillStyle = "#aaaaaa";
+                ctx.beginPath();
+                ctx.arc(drawX + 25, drawY + 25, 8, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        // Draw Players & Bites
         for (let id in players) {
             let p = players[id];
-            if (!p || p.status !== "playing" && p.status !== "review") continue;
+            if (!p || p.status !== "playing" && p.status !== "review" && p.status !== "rejected") continue;
 
-            let pX = p.x * TILE_SIZE;
-            let pY = p.y * TILE_SIZE;
+            let drawX = (p.x * TILE_SIZE) - camX;
+            let drawY = (p.y * TILE_SIZE) - camY;
             
-            // Draw Larger Avatars (46x46 inside 50x50 tile)
-            if (p.isAlpha) {
-                if (imgAlpha.complete && imgAlpha.naturalHeight !== 0) {
-                    ctx.drawImage(imgAlpha, pX + 2, pY + 2, 46, 46);
-                } else {
-                    ctx.fillStyle = "#d4af37"; ctx.fillRect(pX + 2, pY + 2, 46, 46);
-                }
-            } else {
-                if (imgLone.complete && imgLone.naturalHeight !== 0) {
-                    ctx.drawImage(imgLone, pX + 2, pY + 2, 46, 46);
-                } else {
-                    ctx.fillStyle = "#555"; ctx.fillRect(pX + 2, pY + 2, 46, 46);
-                }
+            if (drawX > -150 && drawX < canvas.width + 150 && drawY > -150 && drawY < canvas.height + 150) {
                 
-                // Draw HP Bar for Lone Wolves
-                ctx.fillStyle = "#333";
-                ctx.fillRect(pX + 2, pY - 8, 46, 5);
-                ctx.fillStyle = "#ff3333";
-                ctx.fillRect(pX + 2, pY - 8, (p.hp / 100) * 46, 5);
-            }
+                let avatarSize = 100; // Double Size Icons
+                let offset = (avatarSize - TILE_SIZE) / 2; 
+                
+                if (p.isAlpha) {
+                    if (imgAlpha.complete && imgAlpha.naturalHeight !== 0) {
+                        ctx.drawImage(imgAlpha, drawX - offset, drawY - offset, avatarSize, avatarSize);
+                    } else {
+                        ctx.fillStyle = "#d4af37"; ctx.fillRect(drawX - offset, drawY - offset, avatarSize, avatarSize);
+                    }
+                } else {
+                    if (imgLone.complete && imgLone.naturalHeight !== 0) {
+                        ctx.drawImage(imgLone, drawX - offset, drawY - offset, avatarSize, avatarSize);
+                    } else {
+                        ctx.fillStyle = "#555"; ctx.fillRect(drawX - offset, drawY - offset, avatarSize, avatarSize);
+                    }
+                    
+                    // HP Bar
+                    ctx.fillStyle = "#333"; ctx.fillRect(drawX, drawY - 15, TILE_SIZE, 6);
+                    ctx.fillStyle = "#ff3333"; ctx.fillRect(drawX, drawY - 15, (p.hp / 100) * TILE_SIZE, 6);
+                }
 
-            ctx.fillStyle = p.isAlpha ? "#d4af37" : "#ffffff";
-            ctx.font = "12px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText(p.name, pX + 25, pY - 12);
+                ctx.fillStyle = p.isAlpha ? "#d4af37" : "#ffffff";
+                ctx.font = "16px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(p.name, drawX + (TILE_SIZE/2), drawY - 25);
+
+                // DRAW BITE
+                if (p.biteTarget && (Date.now() - p.biteTarget.time < 300)) { 
+                    drawTeeth((p.biteTarget.x * TILE_SIZE) - camX, (p.biteTarget.y * TILE_SIZE) - camY);
+                }
+            }
         }
+    }
+
+    function drawTeeth(drawX, drawY) {
+        ctx.fillStyle = "#ffffff"; 
+        ctx.beginPath(); ctx.moveTo(drawX, drawY); ctx.lineTo(drawX + 10, drawY + 20); ctx.lineTo(drawX + 25, drawY); ctx.lineTo(drawX + 40, drawY + 20); ctx.lineTo(drawX + 50, drawY); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(drawX, drawY + 50); ctx.lineTo(drawX + 10, drawY + 30); ctx.lineTo(drawX + 25, drawY + 50); ctx.lineTo(drawX + 40, drawY + 30); ctx.lineTo(drawX + 50, drawY + 50); ctx.fill();
     }
 
     function submitOffering() {
@@ -350,10 +495,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const base64Image = e.target.result;
-                db.ref("players/" + myPlayerId).update({
-                    status: "review",
-                    offering: base64Image
-                });
+                db.ref("players/" + myPlayerId).update({ status: "review", offering: base64Image });
             };
             reader.readAsDataURL(fileInput.files[0]);
         }
@@ -373,30 +515,22 @@
                         <h3 style="color:#d4af37; margin-top:0;">${p.name} awaits your judgment.</h3>
                         <img src="${p.offering}" />
                         <br>
-                        <button style="color:#00ff00; border-color:#00ff00;" onclick="judgeWolf('${id}', 'accepted')">ACCEPT</button>
-                        <button style="color:#ea4335; border-color:#ea4335;" onclick="judgeWolf('${id}', 'rejected')">REJECT</button>
+                        <button style="color:#00ff00; border-color:#00ff00; background:rgba(0,50,0,0.5);" onclick="judgeWolf('${id}', 'accepted', '${p.name}')">ACCEPT</button>
+                        <button style="color:#ea4335; border-color:#ea4335; background:rgba(50,0,0,0.5);" onclick="judgeWolf('${id}', 'rejected', '${p.name}')">REJECT</button>
                     </div>
                 `;
             }
         }
-        if (!hasPending) {
-            list.innerHTML = "<p style='color:#8c8c8c;'>No offerings currently under review. The wolves are still fighting.</p>";
-        }
+        if (!hasPending) list.innerHTML = "<p style='color:#8c8c8c;'>No offerings currently under review. The pack is hunting.</p>";
     }
 
-    function judgeWolf(playerId, verdict) {
+    function judgeWolf(playerId, verdict, playerName) {
         if (verdict === 'accepted') {
             db.ref("players/" + playerId).update({ status: "accepted" });
+            db.ref("settings/alphaMessage").set(`The Alpha has ACCEPTED an offering from ${playerName}.`);
         } else {
-            db.ref("players/" + playerId).update({ 
-                status: "playing", 
-                offering: "",
-                hp: 100,
-                x: 1, 
-                y: 1 
-            });
-            // Publicly shame the rejected wolf on the broadcast
-            db.ref("settings/alphaMessage").set("The Alpha has rejected an offering. Try harder.");
+            db.ref("players/" + playerId).update({ status: "rejected" });
+            db.ref("settings/alphaMessage").set(`The Alpha has REJECTED an offering from ${playerName}. They have been banished.`);
         }
     }
 </script>
