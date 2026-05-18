@@ -89,10 +89,14 @@
 <script>
     // 1. INITIALIZE FIREBASE (PASTE YOUR CONFIG HERE)
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "your-project.firebaseapp.com",
-        databaseURL: "https://your-project-default-rtdb.firebaseio.com",
-        projectId: "your-project"
+  apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
+  authDomain: "sovereignhunt.firebaseapp.com",
+  databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
+  projectId: "sovereignhunt",
+  storageBucket: "sovereignhunt.firebasestorage.app",
+  messagingSenderId: "657296200169",
+  appId: "1:657296200169:web:22a0f9364344e682083b78",
+  measurementId: "G-20Z6PTB38V"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -104,7 +108,7 @@
     const ROWS = 20;
     const COLS = 20;
 
-    const imgAlpha = new Image(); imgAlpha.src = "alpha.jpeg";
+    const imgAlpha = new Image(); imgAlpha.src = "alpha.jpg";
     const imgLone = new Image(); imgLone.src = "lone.jpg";
 
     // 20x20 Expanded Map: 0 = Desert, 1 = Wall, 2 = Altar
