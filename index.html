@@ -2,16 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sovereign Protocol | The Hunt</title>
     <style>
-        body { background-color: #050505; color: #d4af37; font-family: 'Georgia', serif; text-align: center; margin: 0; padding: 20px; }
-        canvas { border: 2px solid #2a2a2a; box-shadow: 0 0 30px #000; background-color: #111; margin-top: 20px; }
-        #ui-layer { margin-top: 15px; }
-        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
-        input[type="text"] { background: #1a1a1a; border: 1px solid #d4af37; color: #fff; padding: 10px; text-align: center; font-size: 16px; margin-bottom: 20px;}
-        button { background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 10px 20px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
+        body { background-color: #050505; color: #d4af37; font-family: 'Georgia', serif; text-align: center; margin: 0; padding: 0; overflow: hidden; touch-action: none; }
+        
+        /* Responsive Canvas for Mobile */
+        canvas { background-color: #0a0a0a; border-bottom: 2px solid #2a2a2a; max-width: 100vw; max-height: 70vh; width: 100%; object-fit: contain; }
+        
+        #ui-layer { position: absolute; top: 10px; width: 100%; text-align: center; pointer-events: none; text-shadow: 2px 2px 4px #000; }
+        
+        /* Menus and Modals */
+        .fullscreen-menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
+        input[type="text"] { background: #1a1a1a; border: 1px solid #d4af37; color: #fff; padding: 12px; text-align: center; font-size: 16px; margin-bottom: 20px; width: 80%; max-width: 300px;}
+        button { background: rgba(10, 10, 10, 0.9); border: 1px solid #d4af37; color: #d4af37; padding: 12px 25px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; margin: 5px; }
         button:hover { background: rgba(212, 175, 55, 0.2); }
-        #altar-modal { display: none; position: absolute; top: 30%; left: 50%; transform: translateX(-50%); background: #0a0a0a; border: 1px solid #d4af37; padding: 30px; box-shadow: 0 0 40px #000; z-index: 5; }
+        
+        #altar-modal { display: none; position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(10,10,10,0.95); border: 1px solid #d4af37; padding: 30px; box-shadow: 0 0 40px #000; z-index: 15; width: 85%; max-width: 400px; }
+        
+        /* Mobile D-PAD */
+        #d-pad { display: grid; grid-template-columns: 60px 60px 60px; grid-template-rows: 60px 60px 60px; gap: 5px; justify-content: center; margin-top: 15px; }
+        .d-btn { background: rgba(26, 26, 26, 0.8); border: 1px solid #333; color: #555; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 24px; user-select: none; }
+        .d-btn:active { background: rgba(212, 175, 55, 0.5); color: #fff; border-color: #d4af37; }
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-down { grid-column: 2; grid-row: 3; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+
+        /* Alpha Dashboard */
+        #alpha-dashboard { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:#050505; z-index: 30; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .offering-card { border: 1px solid #d4af37; padding: 15px; margin-bottom: 20px; background: #0a0a0a; }
+        .offering-card img { max-width: 100%; max-height: 300px; margin: 10px 0; border: 1px solid #333; }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -19,124 +40,187 @@
 </head>
 <body>
 
-    <div id="login-screen">
+    <div id="login-screen" class="fullscreen-menu">
         <h1 style="letter-spacing: 5px; text-transform: uppercase;">The Sovereign Wastes</h1>
         <p style="color: #8c8c8c; font-style: italic; margin-bottom: 30px;">Enter your identifier to begin the hunt.</p>
         <input type="text" id="player-name" placeholder="IDENTIFIER" autocomplete="off">
         <button onclick="startGame()">Enter The Territory</button>
     </div>
 
+    <div id="lock-screen" class="fullscreen-menu" style="display: none;">
+        <h1 style="color: #ea4335; letter-spacing: 3px;">TRANSMISSION RECEIVED</h1>
+        <p style="color: #8c8c8c;">The Alpha is currently reviewing your visual offering.</p>
+        <p class="pulse" style="color: #d4af37;">Do not leave this territory. Awaiting judgment...</p>
+    </div>
+
+    <div id="victory-screen" class="fullscreen-menu" style="display: none;">
+        <h1 style="color: #00ff00; letter-spacing: 3px;">OFFERING ACCEPTED</h1>
+        <p style="color: #fff; max-width: 400px; line-height: 1.6;">You have proven your discipline. The Alpha finds your offering satisfactory.</p>
+        <p style="color: #d4af37; border: 1px solid #d4af37; padding: 15px; margin-top: 20px;">INVITATION: Sovereign Suite. Friday at 9 PM. Wear black.</p>
+    </div>
+
+    <div id="alpha-dashboard">
+        <h1 style="border-bottom: 1px solid #d4af37; padding-bottom: 10px;">THE ALPHA'S DEN</h1>
+        <button onclick="document.getElementById('alpha-dashboard').style.display='none'">View Map</button>
+        <div id="offerings-list"></div>
+    </div>
+
     <div id="altar-modal">
         <h2 style="margin-top:0;">THE OBSIDIAN ALTAR</h2>
         <p style="font-size: 14px; color: #8c8c8c;">The Alpha is watching. Upload your visual offering.</p>
-        <input type="file" id="offering-file" accept="image/*" style="margin: 20px 0; color:#fff;">
+        <input type="file" id="offering-file" accept="image/*" style="margin: 20px 0; color:#fff; width: 100%;">
         <button onclick="submitOffering()">Submit to the Alpha</button>
+        <button onclick="document.getElementById('altar-modal').style.display='none'">Walk Away</button>
     </div>
 
     <div id="ui-layer">
-        <h2 id="status-text">Awaiting Deployment...</h2>
+        <h3 id="status-text" style="margin:0;">Awaiting Deployment...</h3>
     </div>
 
-    <canvas id="gameCanvas" width="640" height="640"></canvas>
+    <canvas id="gameCanvas" width="800" height="800"></canvas>
+
+    <div id="d-pad">
+        <div class="d-btn" id="btn-up" onclick="move('up')">▲</div>
+        <div class="d-btn" id="btn-left" onclick="move('left')">◀</div>
+        <div class="d-btn" id="btn-down" onclick="move('down')">▼</div>
+        <div class="d-btn" id="btn-right" onclick="move('right')">▶</div>
+    </div>
 
 <script>
     // 1. INITIALIZE FIREBASE (PASTE YOUR CONFIG HERE)
     const firebaseConfig = {
-    apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
-    authDomain: "sovereignhunt.firebaseapp.com",
-    databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
-    projectId: "sovereignhunt",
-    storageBucket: "sovereignhunt.firebasestorage.app",
-    messagingSenderId: "657296200169",
-    appId: "1:657296200169:web:22a0f9364344e682083b78",
-    measurementId: "G-20Z6PTB38V"
+        apiKey: "YOUR_API_KEY",
+        authDomain: "your-project.firebaseapp.com",
+        databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+        projectId: "your-project"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. GAME VARIABLES (From Foundation Game Design PDF)
+    // 2. ASSETS & VARIABLES
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    const TILE_SIZE = 64;
-    const ROWS = 10;
-    const COLS = 10;
+    const TILE_SIZE = 40; // Smaller tiles for a larger map
+    const ROWS = 20;
+    const COLS = 20;
 
-    // The Map Array: 0 = Desert, 1 = Ruins (Wall), 2 = Altar
+    const imgAlpha = new Image(); imgAlpha.src = "alpha.jpeg";
+    const imgLone = new Image(); imgLone.src = "lone.jpg";
+
+    // 20x20 Expanded Map: 0 = Desert, 1 = Wall, 2 = Altar
     const map = [
-        [1,1,1,1,1,1,1,1,1,1],
-        [1,0,0,0,1,0,0,0,0,1],
-        [1,0,1,0,0,0,1,1,0,1],
-        [1,0,0,0,0,0,0,0,0,1],
-        [1,0,1,0,2,2,0,1,0,1],
-        [1,0,0,0,2,2,0,0,0,1],
-        [1,0,1,1,0,0,0,1,0,1],
-        [1,0,0,0,0,1,0,0,0,1],
-        [1,0,1,0,0,0,0,1,0,1],
-        [1,1,1,1,1,1,1,1,1,1]
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+        [1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,0,1],
+        [1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+        [1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1,1,1,1],
+        [1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+        [1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1,1],
+        [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1],
+        [1,0,1,1,1,0,1,1,1,0,0,1,1,0,1,1,1,1,0,1],
+        [1,0,1,0,0,0,0,0,1,2,2,1,0,0,0,0,0,1,0,1],
+        [1,0,1,0,1,1,1,0,1,2,2,1,0,1,1,1,0,1,0,1],
+        [1,0,0,0,1,0,0,0,1,1,1,1,0,0,0,1,0,0,0,1],
+        [1,1,1,0,1,0,1,0,0,0,0,0,0,1,0,1,0,1,1,1],
+        [1,0,0,0,1,0,1,1,1,1,1,1,1,1,0,1,0,0,0,1],
+        [1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1],
+        [1,0,0,0,1,1,1,1,1,0,1,1,1,1,1,1,0,0,0,1],
+        [1,1,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,1,1],
+        [1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,0,1],
+        [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
     ];
 
     let myPlayerId = "";
     let myName = "";
     let isAlpha = false;
-    let players = {}; // Stores all multiplayer data
+    let players = {}; 
 
-    // 3. START GAME & NETWORK CONNECTION
+    // 3. START GAME
     function startGame() {
         myName = document.getElementById("player-name").value.trim().toUpperCase();
         if (!myName) return;
 
-        // Check if you are logging in
         if (myName === "JERRY") {
             myName = "THE ALPHA";
             isAlpha = true;
+            document.getElementById("alpha-dashboard").style.display = "block";
+            document.getElementById("status-text").innerText = "Den Override Engaged.";
+        } else {
+            document.getElementById("status-text").innerText = `Tracking: ${myName}`;
         }
 
         document.getElementById("login-screen").style.display = "none";
-        document.getElementById("status-text").innerText = `Tracking Active: ${myName}`;
-
-        // Create player in Firebase Database
         myPlayerId = "player_" + Math.floor(Math.random() * 100000);
-        const startX = isAlpha ? 4 : 1; // Alpha spawns at center, wolves at edge
-        const startY = isAlpha ? 4 : 1;
+        
+        // Alpha spawns near altar (9,11), wolves at edge (1,1)
+        const startX = isAlpha ? 11 : 1; 
+        const startY = isAlpha ? 9 : 1;
 
         db.ref("players/" + myPlayerId).set({
             name: myName,
             x: startX,
             y: startY,
-            isAlpha: isAlpha
+            isAlpha: isAlpha,
+            status: "playing",
+            offering: ""
         });
 
-        // Delete player on disconnect
         db.ref("players/" + myPlayerId).onDisconnect().remove();
 
-        // Listen for all players moving
+        // Listen for all players
         db.ref("players").on("value", (snapshot) => {
             players = snapshot.val() || {};
+            checkMyState(); // Check if I was accepted/rejected by the Alpha
+            if(isAlpha) renderAlphaDashboard();
             drawGame();
         });
 
-        // Start listening for keyboard movement
         window.addEventListener("keydown", handleKeydown);
     }
 
-    // 4. MOVEMENT & COLLISIONS
+    // 4. CHECK LOCKOUT STATUS
+    function checkMyState() {
+        if (isAlpha) return;
+        const myData = players[myPlayerId];
+        if (!myData) return;
+
+        if (myData.status === "review") {
+            document.getElementById("lock-screen").style.display = "flex";
+            document.getElementById("altar-modal").style.display = "none";
+        } else if (myData.status === "accepted") {
+            document.getElementById("lock-screen").style.display = "none";
+            document.getElementById("victory-screen").style.display = "flex";
+        } else if (myData.status === "playing") {
+            // Unlocked (e.g., if rejected, they are set back to 'playing')
+            document.getElementById("lock-screen").style.display = "none";
+            document.getElementById("victory-screen").style.display = "none";
+        }
+    }
+
+    // 5. MOVEMENT LOGIC
     function handleKeydown(e) {
-        if (!players[myPlayerId]) return;
+        if (e.key === "ArrowUp" || e.key === "w") move('up');
+        if (e.key === "ArrowDown" || e.key === "s") move('down');
+        if (e.key === "ArrowLeft" || e.key === "a") move('left');
+        if (e.key === "ArrowRight" || e.key === "d") move('right');
+    }
+
+    function move(dir) {
+        if (!players[myPlayerId] || players[myPlayerId].status !== "playing") return;
         let newX = players[myPlayerId].x;
         let newY = players[myPlayerId].y;
 
-        if (e.key === "ArrowUp" || e.key === "w") newY--;
-        if (e.key === "ArrowDown" || e.key === "s") newY++;
-        if (e.key === "ArrowLeft" || e.key === "a") newX--;
-        if (e.key === "ArrowRight" || e.key === "d") newX++;
+        if (dir === 'up') newY--;
+        if (dir === 'down') newY++;
+        if (dir === 'left') newX--;
+        if (dir === 'right') newX++;
 
-        // Boundary and Wall Collision Check
         if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS) {
-            if (map[newY][newX] !== 1) { // 1 is a wall
-                // Move player in Firebase
+            if (map[newY][newX] !== 1) { // 1 = wall
                 db.ref("players/" + myPlayerId).update({ x: newX, y: newY });
                 
-                // Check if they stepped on the Altar (2)
+                // Trigger Altar Modal
                 if (map[newY][newX] === 2 && !isAlpha) {
                     document.getElementById("altar-modal").style.display = "block";
                 } else {
@@ -146,20 +230,19 @@
         }
     }
 
-    // 5. RENDER THE GAME (HTML5 CANVAS)
+    // 6. RENDER THE GAME
     function drawGame() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw Map
         for (let row = 0; row < ROWS; row++) {
             for (let col = 0; col < COLS; col++) {
                 let tile = map[row][col];
                 if (tile === 1) {
-                    ctx.fillStyle = "#1a1a1a"; // Ruins/Walls
+                    ctx.fillStyle = "#1a1a1a"; // Walls
                 } else if (tile === 2) {
-                    ctx.fillStyle = "#330000"; // Obsidian Altar
+                    ctx.fillStyle = "#330000"; // Altar
                 } else {
-                    ctx.fillStyle = "#0f0f0f"; // Desert Sand
+                    ctx.fillStyle = "#0f0f0f"; // Sand
                 }
                 ctx.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 ctx.strokeStyle = "#151515";
@@ -167,32 +250,83 @@
             }
         }
 
-        // Draw Multiplayer Avatars
+        // Draw Avatars
         for (let id in players) {
             let p = players[id];
+            let xPos = col * TILE_SIZE; // Fix: use pixel coordinates
+            let pX = p.x * TILE_SIZE;
+            let pY = p.y * TILE_SIZE;
             
-            // Draw Player Square
-            ctx.fillStyle = p.isAlpha ? "#d4af37" : "#555555"; // Gold for Alpha, Gray for Wolves
-            ctx.fillRect((p.x * TILE_SIZE) + 16, (p.y * TILE_SIZE) + 16, 32, 32);
+            if (p.isAlpha) {
+                if (imgAlpha.complete) ctx.drawImage(imgAlpha, pX + 2, pY + 2, 36, 36);
+                else { ctx.fillStyle = "#d4af37"; ctx.fillRect(pX + 2, pY + 2, 36, 36); }
+            } else {
+                if (imgLone.complete) ctx.drawImage(imgLone, pX + 2, pY + 2, 36, 36);
+                else { ctx.fillStyle = "#555"; ctx.fillRect(pX + 2, pY + 2, 36, 36); }
+            }
 
-            // Draw Name Tag
             ctx.fillStyle = p.isAlpha ? "#d4af37" : "#ffffff";
-            ctx.font = "12px Arial";
+            ctx.font = "10px Arial";
             ctx.textAlign = "center";
-            ctx.fillText(p.name, (p.x * TILE_SIZE) + 32, (p.y * TILE_SIZE) + 10);
+            ctx.fillText(p.name, pX + 20, pY - 5);
         }
     }
 
-    // 6. SUBMIT OFFERING
+    // 7. BASE64 OFFERING UPLOAD
     function submitOffering() {
-        const file = document.getElementById("offering-file").files[0];
-        if (file) {
-            document.getElementById("altar-modal").innerHTML = "<h3 style='color:#00ff00;'>OFFERING TRANSMITTED.</h3><p style='color:#fff'>The Queen is reviewing. Return to the wastes.</p>";
-            setTimeout(() => {
-                document.getElementById("altar-modal").style.display = "none";
-                // Teleport them slightly away from the altar
-                db.ref("players/" + myPlayerId).update({ x: 1, y: 1 });
-            }, 3000);
+        const fileInput = document.getElementById("offering-file");
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                // Lock the player and send data
+                db.ref("players/" + myPlayerId).update({
+                    status: "review",
+                    offering: base64Image
+                });
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+
+    // 8. ALPHA DASHBOARD LOGIC (Reviewing Submissions)
+    function renderAlphaDashboard() {
+        const list = document.getElementById("offerings-list");
+        list.innerHTML = "";
+        let hasPending = false;
+
+        for (let id in players) {
+            let p = players[id];
+            if (p.status === "review" && p.offering !== "") {
+                hasPending = true;
+                list.innerHTML += `
+                    <div class="offering-card">
+                        <h3 style="color:#d4af37; margin-top:0;">${p.name} awaits your judgment.</h3>
+                        <img src="${p.offering}" />
+                        <br>
+                        <button style="color:#00ff00; border-color:#00ff00;" onclick="judgeWolf('${id}', 'accepted')">ACCEPT</button>
+                        <button style="color:#ea4335; border-color:#ea4335;" onclick="judgeWolf('${id}', 'rejected')">REJECT</button>
+                    </div>
+                `;
+            }
+        }
+        if (!hasPending) {
+            list.innerHTML = "<p style='color:#8c8c8c;'>No offerings currently under review. The wolves are still hunting.</p>";
+        }
+    }
+
+    // 9. ALPHA JUDGMENT
+    function judgeWolf(playerId, verdict) {
+        if (verdict === 'accepted') {
+            db.ref("players/" + playerId).update({ status: "accepted" });
+        } else {
+            // Rejected: Teleport back to spawn, reset status, clear offering
+            db.ref("players/" + playerId).update({ 
+                status: "playing", 
+                offering: "",
+                x: 1, 
+                y: 1 
+            });
         }
     }
 </script>
