@@ -22,7 +22,7 @@
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Georgia', serif; /* More elegant, sensual font */
+            font-family: 'Georgia', serif; 
             background-color: var(--obsidian); color: var(--flesh);
             overflow: hidden; touch-action: none; 
         }
@@ -61,23 +61,30 @@
             transition: transform 0.1s linear; transform-origin: top left;
         }
         
-        /* Ground Grit/Sand Detail */
         #world-map::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-image: 
-                radial-gradient(rgba(230, 194, 122, 0.1) 1px, transparent 1px),
-                radial-gradient(rgba(158, 0, 0, 0.05) 1px, transparent 1px);
+                radial-gradient(rgba(230, 194, 122, 0.08) 1px, transparent 1px),
+                radial-gradient(rgba(158, 0, 0, 0.04) 1px, transparent 1px);
             background-size: 30px 30px; background-position: 0 0, 15px 15px;
             pointer-events: none; z-index: 0;
         }
 
         /* Landscape */
-        .rock-wall { position: absolute; background: linear-gradient(45deg, #050505, #1a1a1a); border: 1px solid #333; box-shadow: inset 0 0 15px #000, 5px 5px 20px rgba(0,0,0,0.8); border-radius: 4px; z-index: 10; }
+        .boulder {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, #1c1c1c 0%, #050505 80%);
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8), 10px 10px 30px rgba(0,0,0,0.9);
+            border: 1px solid #222;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
         .moon { position: absolute; top: 2000px; left: 2000px; font-size: 20rem; filter: drop-shadow(0 0 80px rgba(255, 255, 170, 0.4)); opacity: 0.15; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; }
         .decor { position: absolute; font-size: 2rem; opacity: 0.4; pointer-events: none; z-index: 5; filter: drop-shadow(2px 2px 5px black); }
         
-        .magic-barrier { position: absolute; border: 2px solid var(--blood-red); background: radial-gradient(circle, rgba(158,0,0,0.1), rgba(158,0,0,0.3)); box-shadow: 0 0 50px var(--blood-red), inset 0 0 30px var(--deep-blood); border-radius: 50%; z-index: 15; animation: pulse-barrier 4s infinite alternate; }
-        @keyframes pulse-barrier { 0% { opacity: 0.8; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1.02); } }
+        .magic-barrier { position: absolute; border: 2px solid var(--blood-red); background: radial-gradient(circle, rgba(158,0,0,0.1), rgba(158,0,0,0.3)); box-shadow: 0 0 50px var(--blood-red), inset 0 0 30px var(--deep-blood); border-radius: 50%; z-index: 15; animation: pulse-barrier 4s infinite alternate; transform: translate(-50%, -50%);}
+        @keyframes pulse-barrier { 0% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.98); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); } }
         
         .obelisk { font-size: 3.5rem; position: absolute; transform: translate(-50%, -50%); transition: all 0.5s; filter: drop-shadow(0 0 15px black); z-index: 20; }
         .obelisk.active { filter: drop-shadow(0 0 40px var(--sovereign-gold)) drop-shadow(0 0 20px var(--blood-red)); animation: throb 2s infinite alternate; }
@@ -113,6 +120,7 @@
         }
 
         /* UI Overlays */
+        #low-hp-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, transparent 40%, rgba(158,0,0,0.6) 100%); pointer-events: none; opacity: 0; z-index: 100; transition: opacity 0.5s; animation: pulse-barrier 1s infinite alternate;}
         #ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
         #dynamic-text { position: absolute; top: 15%; width: 100%; text-align: center; font-size: 2.2rem; color: var(--sovereign-gold); text-shadow: 0px 0px 15px rgba(230, 194, 122, 0.5), 2px 2px 5px #000; font-style: italic; padding: 0 20px; }
         #puzzle-status { position: absolute; top: 20px; left: 20px; font-size: 1.1rem; color: var(--blood-red); text-shadow: 1px 1px 5px black; font-weight: bold; letter-spacing: 1px;}
@@ -166,6 +174,7 @@
             <div id="barrier" class="magic-barrier" style="display:none;"></div>
         </div>
 
+        <div id="low-hp-overlay"></div>
         <div id="ui-overlay">
             <div id="puzzle-status">Pillars of Submission: <span id="orb-count" style="color:var(--flesh);">0/3</span></div>
             <div id="dynamic-text"></div>
@@ -228,7 +237,7 @@
         const PLAYER_RADIUS = 30;
 
         let role = "", myName = "", myId = "";
-        let myPos = { x: 100, y: 100 };
+        let myPos = { x: 0, y: 0 };
         let myHp = 50;
         let isDead = false;
         
@@ -258,7 +267,7 @@
             if(!snap.exists()) db.ref('puzzle').set({ ob1: false, ob2: false, ob3: false });
         });
 
-        // --- Auth ---
+        // --- Core Auth & State Loading ---
         function login() {
             const rawInput = document.getElementById("login-input").value.trim();
             const inputLower = rawInput.toLowerCase();
@@ -270,7 +279,40 @@
                     myName = rawInput;
                     if(inputLower === "the alpha") { role = "alpha"; myId = "alpha_main"; } 
                     else { role = "wolf"; myId = "wolf_" + inputLower.replace(/\s+/g, ''); }
-                    startGame();
+                    
+                    // Build landscape so obstacles exist for collision checking
+                    buildLandscape();
+
+                    // Restore or Create Player State
+                    let refStr = role === "alpha" ? 'alphaLoc' : 'wolves/' + myId;
+                    db.ref(refStr).once('value', userSnap => {
+                        if (userSnap.exists()) {
+                            let data = userSnap.val();
+                            if (role === "alpha") {
+                                myPos.x = data.x; myPos.y = data.y;
+                            } else {
+                                myPos.x = data.x; myPos.y = data.y; myHp = data.hp || 50;
+                            }
+                        } else {
+                            if (role === "alpha") {
+                                myPos = { x: DEN_POS.x, y: DEN_POS.y };
+                            } else {
+                                myPos = getSafeSpawn();
+                                myHp = 50;
+                            }
+                        }
+
+                        // Save loaded state
+                        if (role === "alpha") {
+                            db.ref('alphaLoc').set(myPos);
+                        } else {
+                            db.ref('wolves/' + myId).update({ name: myName, hp: myHp, x: myPos.x, y: myPos.y });
+                            spawnMobs();
+                        }
+                        
+                        startGameUI();
+                    });
+
                 } else {
                     errorText.innerText = "The Sovereign rejects this name. You are not authorized.";
                     errorText.style.display = "block";
@@ -278,12 +320,23 @@
             });
         }
 
-        // --- Game Init ---
-        function startGame() {
+        // --- Safe Spawning Algorithm ---
+        function getSafeSpawn() {
+            let sx, sy;
+            let safe = false;
+            while(!safe) {
+                sx = Math.random() * (MAP_SIZE - 400) + 200;
+                sy = Math.random() * (MAP_SIZE - 400) + 200;
+                if (!isColliding(sx, sy)) safe = true;
+            }
+            return { x: sx, y: sy };
+        }
+
+        // --- UI Initialization ---
+        function startGameUI() {
             document.getElementById("login-screen").style.display = "none";
             document.getElementById("game-viewport").style.display = "block";
             
-            buildLandscape();
             setupControls();
 
             if (role === "alpha") {
@@ -292,12 +345,6 @@
                 document.getElementById("action-btn").style.background = "radial-gradient(circle, #D4AF37, #8B6508)";
                 document.getElementById("action-btn").style.borderColor = "#000";
                 document.getElementById("action-btn").style.color = "black";
-                myPos = { x: DEN_POS.x, y: DEN_POS.y }; 
-                db.ref('alphaLoc').set(myPos); 
-            } else {
-                myPos = { x: Math.random() * 800 + 200, y: Math.random() * 800 + 200 }; 
-                db.ref('wolves/' + myId).set({ name: myName, hp: 50, x: myPos.x, y: myPos.y });
-                spawnMobs();
             }
 
             requestAnimationFrame(gameLoop);
@@ -314,13 +361,13 @@
             den.innerHTML = `<div style="font-size:6rem; filter: drop-shadow(0 0 20px #000);">🕳️</div><div style="color:var(--sovereign-gold); font-weight:bold; font-size:1.8rem; text-shadow: 0 0 15px black; font-style:italic;">The Sovereign's Den</div>`;
             map.appendChild(den);
 
-            // Magic Barrier (Alpha passes freely, Wolves cannot until solved)
+            // Circular Magic Barrier (Radius 300)
             let barrier = document.getElementById("barrier");
-            barrier.style.left = (DEN_POS.x - 300) + "px";
-            barrier.style.top = (DEN_POS.y - 300) + "px";
+            barrier.style.left = DEN_POS.x + "px";
+            barrier.style.top = DEN_POS.y + "px";
             barrier.style.width = "600px"; barrier.style.height = "600px";
             barrier.style.display = "block";
-            obstacles.push({ id: 'barrier', x: DEN_POS.x - 300, y: DEN_POS.y - 300, w: 600, h: 600 });
+            obstacles.push({ id: 'barrier', x: DEN_POS.x, y: DEN_POS.y, r: 300 });
 
             // Pillars of Submission (Obelisks)
             obelisks.forEach(ob => {
@@ -331,22 +378,35 @@
                 map.appendChild(el);
             });
 
-            // Rock Walls
-            function addWall(x, y, w, h) {
-                let wEl = document.createElement("div");
-                wEl.className = "rock-wall";
-                wEl.style.left = x + "px"; wEl.style.top = y + "px";
-                wEl.style.width = w + "px"; wEl.style.height = h + "px";
-                map.appendChild(wEl);
-                obstacles.push({id: 'wall', x, y, w, h});
-            }
-
-            for(let i=0; i<35; i++) {
-                let rx = Math.random() * (MAP_SIZE - 400);
-                let ry = Math.random() * (MAP_SIZE - 400);
-                if (Math.hypot(rx - DEN_POS.x, ry - DEN_POS.y) < 700) continue; 
-                let isVert = Math.random() > 0.5;
-                addWall(rx, ry, isVert ? 100 : 500, isVert ? 500 : 100);
+            // Organic Circular Boulders
+            for(let i=0; i<40; i++) {
+                let r = Math.random() * 80 + 60; // Size between 60 and 140
+                let rx, ry;
+                let safe = false;
+                
+                // Ensure den area is COMPLETELY free of rocks
+                while(!safe) {
+                    rx = Math.random() * (MAP_SIZE - 200) + 100;
+                    ry = Math.random() * (MAP_SIZE - 200) + 100;
+                    if (Math.hypot(rx - DEN_POS.x, ry - DEN_POS.y) > 800) {
+                        safe = true;
+                    }
+                }
+                
+                let bEl = document.createElement("div");
+                bEl.className = "boulder";
+                bEl.style.left = rx + "px"; bEl.style.top = ry + "px";
+                bEl.style.width = (r*2) + "px"; bEl.style.height = (r*2) + "px";
+                
+                // Random organic shape
+                let br1 = Math.floor(Math.random() * 30 + 35);
+                let br2 = Math.floor(Math.random() * 30 + 35);
+                let br3 = Math.floor(Math.random() * 30 + 35);
+                let br4 = Math.floor(Math.random() * 30 + 35);
+                bEl.style.borderRadius = `${br1}% ${100-br1}% ${br2}% ${100-br2}% / ${br3}% ${br4}% ${100-br4}% ${100-br3}%`;
+                
+                map.appendChild(bEl);
+                obstacles.push({id: 'boulder', x: rx, y: ry, r: r});
             }
 
             // Flora
@@ -471,6 +531,10 @@
                     if (id === myId && role === "wolf") {
                         myHp = w.hp;
                         checkDeathState();
+                        
+                        // Low HP Vignette
+                        if (myHp < 20) document.getElementById("low-hp-overlay").style.opacity = 1 - (myHp/20);
+                        else document.getElementById("low-hp-overlay").style.opacity = 0;
                     }
                 }
             });
@@ -494,17 +558,18 @@
             }
         }
 
-        // --- Core Game Loop (Movement & Collisions & AI) ---
+        // --- Core Game Loop (Movement & Circular Collisions & AI) ---
         function isColliding(x, y) {
             if(x < 20 || x > MAP_SIZE - 20 || y < 20 || y > MAP_SIZE - 20) return true;
             for(let o of obstacles) {
-                // The Alpha is immune to the magic barrier
+                // The Alpha is completely immune to the magic barrier
                 if (role === 'alpha' && o.id === 'barrier') continue; 
+                // Barrier turns off when puzzle solved
                 if (!barrierActive && o.id === 'barrier') continue;
 
-                if(x + PLAYER_RADIUS > o.x && x - PLAYER_RADIUS < o.x + o.w && 
-                   y + PLAYER_RADIUS > o.y && y - PLAYER_RADIUS < o.y + o.h) {
-                    return true;
+                // Radial collision (Smooth sliding)
+                if(o.r) {
+                    if (Math.hypot(x - o.x, y - o.y) < o.r + PLAYER_RADIUS) return true;
                 }
             }
             return false;
@@ -527,6 +592,7 @@
                 if (moveState.right) vx += speed;
 
                 if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
+                    // Test X and Y independently to allow sliding
                     if (!isColliding(myPos.x + vx, myPos.y)) myPos.x += vx;
                     if (!isColliding(myPos.x, myPos.y + vy)) myPos.y += vy;
 
@@ -607,7 +673,7 @@
             if(myAvatarDiv) {
                 const avatarIcon = myAvatarDiv.querySelector('.avatar');
                 avatarIcon.classList.add("biting");
-                setTimeout(() => avatarIcon.classList.remove("biting"), 400); // Wait for anim
+                setTimeout(() => avatarIcon.classList.remove("biting"), 400); 
             }
 
             if (role === "alpha") {
@@ -622,7 +688,6 @@
             } else {
                 let hpGained = 0;
                 
-                // Attack Mobs
                 mobs.forEach(m => {
                     if (m.alive && Math.hypot(m.x - myPos.x, m.y - myPos.y) <= HIT_RADIUS) {
                         m.hp -= 10;
@@ -635,7 +700,6 @@
                     }
                 });
 
-                // Attack Wolves (Desperate struggle)
                 db.ref('wolves').once('value', snap => {
                     const wolves = snap.val();
                     for (let id in wolves) {
@@ -648,7 +712,6 @@
                     if (hpGained > 0) db.ref('wolves/' + myId + '/hp').set(myHp + hpGained);
                 });
 
-                // Activate Pillars
                 obelisks.forEach(ob => {
                     if (!puzzleState[ob.id] && Math.hypot(ob.x - myPos.x, ob.y - myPos.y) <= HIT_RADIUS * 1.5) {
                         db.ref('puzzle/' + ob.id).set(true);
@@ -661,18 +724,18 @@
         function checkDeathState() {
             const nearDen = Math.hypot(myPos.x - DEN_POS.x, myPos.y - DEN_POS.y) < 150;
             
-            // Trigger if Vitality is 0, OR if they managed to crawl into the den and the barrier is down
             if (myHp <= 0 || (nearDen && !barrierActive)) {
                 isDead = true;
                 document.getElementById("joystick-zone").style.display = "none";
                 document.getElementById("action-btn").style.display = "none";
                 document.getElementById("submission-modal").style.display = "flex";
+                document.getElementById("low-hp-overlay").style.display = "none";
             } else if (isDead && myHp > 0) {
-                // Reborn / Granted vitality by Alpha
                 isDead = false;
                 document.getElementById("joystick-zone").style.display = "block";
                 document.getElementById("action-btn").style.display = "flex";
                 document.getElementById("submission-modal").style.display = "none";
+                document.getElementById("low-hp-overlay").style.display = "block";
                 if(nearDen) { myPos.y += 350; db.ref('wolves/' + myId).update({y: myPos.y}); }
             }
         }
