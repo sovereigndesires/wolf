@@ -3,536 +3,689 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sovereign Protocol | The Proving Grounds</title>
-    <style>
-        body { background-color: #050505; color: #d4af37; font-family: 'Georgia', serif; text-align: center; margin: 0; padding: 0; overflow: hidden; touch-action: none; }
-        
-        #alpha-broadcast { position: absolute; top: 0; left: 0; width: 100%; background: rgba(20, 0, 0, 0.85); border-bottom: 2px solid #8a0303; color: #ff3333; padding: 10px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; text-shadow: 1px 1px 5px #000; z-index: 15; box-sizing: border-box;}
-        
-        /* Full Screen Canvas */
-        canvas { background-color: #050505; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; box-shadow: inset 0 0 100px #000;}
-        
-        #ui-layer { position: absolute; top: 50px; width: 100%; text-align: center; pointer-events: none; text-shadow: 2px 2px 4px #000; z-index: 10;}
-        
-        .fullscreen-menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
-        input[type="text"] { background: #1a1a1a; border: 1px solid #d4af37; color: #fff; padding: 12px; text-align: center; font-size: 16px; margin-bottom: 20px; width: 80%; max-width: 300px;}
-        button { background: rgba(10, 10, 10, 0.9); border: 1px solid #d4af37; color: #d4af37; padding: 12px 25px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; margin: 5px; }
-        button:hover { background: rgba(212, 175, 55, 0.2); }
-        
-        #altar-modal { display: none; position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(10,10,10,0.95); border: 1px solid #d4af37; padding: 30px; box-shadow: 0 0 40px #000; z-index: 15; width: 85%; max-width: 400px; }
-        
-        /* Overlay Controls on Play Area */
-        #controls-overlay { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; justify-content: center; align-items: center; gap: 40px; z-index: 10; width: 100%; max-width: 600px; }
-        #d-pad { display: grid; grid-template-columns: 55px 55px 55px; grid-template-rows: 55px 55px 55px; gap: 5px; }
-        .d-btn { background: rgba(20, 20, 20, 0.85); border: 1px solid #d4af37; color: #d4af37; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 24px; user-select: none; cursor: pointer; box-shadow: 0 0 10px #000;}
-        .d-btn:active { background: rgba(212, 175, 55, 0.6); color: #fff; }
-        #btn-up { grid-column: 2; grid-row: 1; }
-        #btn-left { grid-column: 1; grid-row: 2; }
-        #btn-down { grid-column: 2; grid-row: 3; }
-        #btn-right { grid-column: 3; grid-row: 2; }
-        
-        .combat-btn { background: rgba(20, 0, 0, 0.85); border: 2px solid #ff3333; color: #ff3333; border-radius: 50%; height: 90px; width: 90px; font-size: 16px; box-shadow: 0 0 15px rgba(255,51,51,0.3); cursor: pointer;}
-        .combat-btn:active { background: rgba(255, 51, 51, 0.6); color: #fff;}
-        
-        #alpha-dashboard { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:#050505; z-index: 30; overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .alpha-console-panel { border: 1px solid #d4af37; padding: 15px; margin-bottom: 20px; background: #0a0a0a; }
-        .offering-card { border: 1px solid #8a0303; padding: 15px; margin-bottom: 20px; background: #110000; }
-        .offering-card img { max-width: 100%; max-height: 300px; margin: 10px 0; border: 1px solid #333; }
-    </style>
+    <title>The Sovereign's Hunt</title>
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --obsidian: #0B0C10;
+            --charcoal: #1F2833;
+            --blood-red: #8A0303;
+            --sovereign-gold: #D4AF37;
+            --flesh: #EAEAEA;
+        }
+
+        * { -webkit-user-select: none; user-select: none; }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--obsidian); color: var(--flesh);
+            overflow: hidden; touch-action: none; 
+        }
+
+        /* --- Login Screen --- */
+        #login-screen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; width: 100vw;
+            background: radial-gradient(circle at center, #1a0000, var(--obsidian));
+            position: absolute; z-index: 1000;
+        }
+
+        #login-screen h1 { font-size: 2.5rem; color: var(--blood-red); text-shadow: 2px 2px 10px rgba(138, 3, 3, 0.8); text-align: center; margin-bottom: 5px; }
+        #login-screen p { color: var(--sovereign-gold); font-style: italic; margin-bottom: 30px; text-align: center; padding: 0 20px;}
+
+        input[type="text"] {
+            padding: 15px; font-size: 1.2rem; margin: 10px; width: 80%; max-width: 300px;
+            border: 1px solid var(--blood-red); border-radius: 8px; background: #000; color: white; text-align: center;
+            -webkit-user-select: auto; user-select: auto;
+        }
+
+        button {
+            padding: 15px 30px; font-size: 1.2rem; margin-top: 10px;
+            background-color: var(--blood-red); color: white; border: none; border-radius: 8px; font-weight: bold;
+            box-shadow: 0px 4px 15px rgba(138, 3, 3, 0.5); text-transform: uppercase; letter-spacing: 1px; transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.95); }
+
+        /* --- Game World --- */
+        #game-viewport { position: relative; width: 100vw; height: 100vh; overflow: hidden; display: none; }
+
+        #world-map {
+            position: absolute; width: 4000px; height: 4000px;
+            background: radial-gradient(circle, var(--charcoal) 0%, #050505 100%);
+            transition: transform 0.1s linear; transform-origin: top left;
+        }
+
+        /* Landscape */
+        .rock-wall { position: absolute; background: #111; border: 2px solid #222; box-shadow: inset 0 0 20px #000, 0 0 15px rgba(0,0,0,0.8); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 2rem; overflow: hidden; }
+        .moon { position: absolute; top: 2000px; left: 2000px; font-size: 15rem; filter: drop-shadow(0 0 50px #FFFFAA); opacity: 0.3; transform: translate(-50%, -50%); pointer-events: none; }
+        .decor { position: absolute; font-size: 2rem; opacity: 0.3; pointer-events: none; }
+        
+        .magic-barrier { position: absolute; border: 4px dashed var(--blood-red); background: rgba(138, 3, 3, 0.2); box-shadow: 0 0 30px var(--blood-red); border-radius: 20px; }
+        .obelisk { font-size: 4rem; position: absolute; transform: translate(-50%, -50%); transition: all 0.5s; filter: drop-shadow(0 0 10px black); }
+        .obelisk.active { filter: drop-shadow(0 0 30px var(--sovereign-gold)); }
+
+        /* Entities */
+        .entity { position: absolute; user-select: none; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; transition: left 0.1s linear, top 0.1s linear; }
+        
+        .avatar { font-size: 3.5rem; position: relative; }
+        .alpha-avatar { 
+            font-size: 8rem; /* Made much larger */
+            filter: drop-shadow(0px 0px 30px var(--blood-red)) drop-shadow(0px 0px 10px var(--sovereign-gold)); 
+            animation: breathe 3s infinite alternate;
+        }
+
+        @keyframes breathe { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+
+        .name-tag { font-size: 0.8rem; font-weight: bold; color: #ccc; margin-top: -5px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
+        .hp-bar { font-size: 0.9rem; background: var(--blood-red); color: white; border-radius: 3px; padding: 2px 8px; margin-top: 2px; font-weight: bold; border: 1px solid black; }
+
+        @keyframes bite-anim { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
+        .biting::after { content: "🦷"; position: absolute; left: 0; top: 0; font-size: 4rem; animation: bite-anim 0.3s ease-in-out; text-shadow: 0 0 10px red; }
+
+        /* UI Overlays */
+        #ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
+        #dynamic-text { position: absolute; top: 10%; width: 100%; text-align: center; font-size: 2rem; color: var(--sovereign-gold); text-shadow: 2px 2px 8px #000; font-weight: bold; padding: 0 20px; box-sizing: border-box; }
+        #puzzle-status { position: absolute; top: 20px; left: 20px; font-size: 1.2rem; color: var(--flesh); text-shadow: 1px 1px 5px black; font-weight: bold; }
+
+        #joystick-zone { position: absolute; bottom: 30px; left: 20px; width: 130px; height: 130px; background: rgba(138, 3, 3, 0.2); border: 2px solid var(--blood-red); border-radius: 50%; pointer-events: auto; touch-action: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        #joystick-stick { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: radial-gradient(circle, var(--blood-red), #4a0000); border: 2px solid #000; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+
+        #action-btn { position: absolute; bottom: 45px; right: 20px; width: 100px; height: 100px; background: radial-gradient(circle, var(--blood-red), #4a0000); border: 2px solid #000; border-radius: 50%; color: white; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; box-shadow: 0 0 20px rgba(138,3,3,0.8); touch-action: none; }
+        #action-btn:active { transform: scale(0.9); }
+
+        /* Alpha Dashboard & Modals */
+        #alpha-menu { position: absolute; top: 10px; right: 10px; pointer-events: auto; background: rgba(0,0,0,0.8); border: 1px solid var(--sovereign-gold); border-radius: 8px; padding: 10px; max-width: 60%; max-height: 80vh; overflow-y: auto; display: none; }
+        #alpha-menu h3 { color: var(--sovereign-gold); margin: 0 0 10px 0; font-size: 1.2rem; }
+        .alpha-input { width: 90%; padding: 8px; margin-bottom: 5px; background: #222; color: white; border: 1px solid #555; -webkit-user-select: auto; user-select: auto;}
+        .alpha-btn { width: 100%; padding: 8px; font-size: 0.9rem; background: #333; color: var(--sovereign-gold); border: 1px solid var(--sovereign-gold); margin-bottom: 10px; }
+        .submission-card { background: #111; border: 1px solid var(--blood-red); padding: 10px; margin-bottom: 10px; border-radius: 5px; text-align: center; }
+        .submission-img { max-width: 100%; max-height: 200px; border-radius: 5px; margin-bottom: 10px; pointer-events: auto; -webkit-touch-callout: default; }
+
+        #submission-modal { display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 12, 16, 0.95); z-index: 500; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; padding: 20px; box-sizing: border-box; text-align: center; }
+        #submission-modal h2 { color: var(--blood-red); font-size: 2rem; margin-bottom: 10px;}
+        #submission-modal p { color: #aaa; font-size: 1.1rem; margin-bottom: 20px; line-height: 1.4; }
+        .custom-file-upload { display: inline-block; padding: 15px 30px; cursor: pointer; background: #222; border: 2px dashed var(--sovereign-gold); color: var(--sovereign-gold); border-radius: 8px; font-size: 1.2rem; margin-bottom: 20px; width: 80%; }
+        input[type="file"] { display: none; }
+        #compressor { display: none; }
+    </style>
 </head>
 <body>
 
-    <div id="alpha-broadcast">AWAITING ALPHA'S COMMAND...</div>
+    <canvas id="compressor"></canvas>
 
-    <div id="login-screen" class="fullscreen-menu">
-        <h1 style="letter-spacing: 5px; text-transform: uppercase;">The Sovereign Wastes</h1>
-        <p style="color: #8c8c8c; font-style: italic; margin-bottom: 30px;">Enter your identifier to begin the hunt.</p>
-        <input type="text" id="player-name" placeholder="IDENTIFIER" autocomplete="off">
-        <button onclick="startGame()">Enter The Territory</button>
+    <div id="login-screen">
+        <h1>The Sovereign's Hunt</h1>
+        <p>Present yourself. Only approved subjects may enter.</p>
+        <input type="text" id="login-input" placeholder="Enter your moniker...">
+        <button onclick="login()">Submit to the Hunt</button>
+        <p id="login-error" style="color:#ff4444; display:none; font-weight:bold; margin-top:15px;"></p>
     </div>
 
-    <div id="lock-screen" class="fullscreen-menu" style="display: none;">
-        <h1 style="color: #ea4335; letter-spacing: 3px;">TRANSMISSION RECEIVED</h1>
-        <p style="color: #8c8c8c;">The Alpha is currently reviewing your visual offering.</p>
-        <p style="color: #d4af37;">Do not leave this territory. Awaiting judgment...</p>
-    </div>
-
-    <div id="victory-screen" class="fullscreen-menu" style="display: none;">
-        <h1 style="color: #00ff00; letter-spacing: 3px;">OFFERING ACCEPTED</h1>
-        <p style="color: #fff; max-width: 400px; line-height: 1.6;">You have proven your discipline. The Alpha finds your offering satisfactory.</p>
-        <p style="color: #d4af37; border: 1px solid #d4af37; padding: 15px; margin-top: 20px;">INVITATION: Sovereign Suite. Awaiting further coordinates.</p>
-    </div>
-
-    <div id="rejected-screen" class="fullscreen-menu" style="display: none;">
-        <h1 style="color: #ea4335; letter-spacing: 3px;">OFFERING REJECTED</h1>
-        <p style="color: #fff; max-width: 400px; line-height: 1.6;">Your offering was deemed unworthy by the Alpha. You have been banished.</p>
-        <button onclick="acknowledgeRejection()">RETURN TO WASTES</button>
-    </div>
-
-    <div id="alpha-dashboard">
-        <h1 style="border-bottom: 1px solid #d4af37; padding-bottom: 10px;">THE ALPHA'S DEN</h1>
-        <div class="alpha-console-panel">
-            <h3 style="margin-top:0;">BROADCAST COMMAND</h3>
-            <p style="font-size: 12px; color: #8c8c8c;">Update the mandate displayed to all lone wolves.</p>
-            <input type="text" id="alpha-msg-input" placeholder="Enter new mandate..." style="width: 100%;">
-            <button onclick="updateAlphaMessage()">BROADCAST TO PACK</button>
-            <button onclick="document.getElementById('alpha-dashboard').style.display='none'">RETURN TO MAP</button>
+    <div id="game-viewport">
+        <div id="world-map">
+            <div class="moon">🌕</div>
+            <div id="barrier" class="magic-barrier" style="display:none;"></div>
         </div>
-        <h3 style="margin-top: 30px;">PENDING OFFERINGS</h3>
-        <div id="offerings-list"></div>
-    </div>
 
-    <div id="altar-modal">
-        <h2 style="margin-top:0;">THE INNER SANCTUM</h2>
-        <p style="font-size: 14px; color: #8c8c8c;">You have reached the Alpha's throne. Leave your visual offering.</p>
-        <input type="file" id="offering-file" accept="image/*" style="margin: 20px 0; color:#fff; width: 100%;">
-        <button onclick="submitOffering()">Submit to the Alpha</button>
-        <button onclick="document.getElementById('altar-modal').style.display='none'">Walk Away</button>
-    </div>
-
-    <div id="ui-layer"><h3 id="status-text" style="margin:0;"></h3></div>
-
-    <canvas id="gameCanvas" width="1000" height="800"></canvas>
-
-    <div id="controls-overlay">
-        <div id="d-pad">
-            <div class="d-btn" id="btn-up" onclick="move('up')">▲</div>
-            <div class="d-btn" id="btn-left" onclick="move('left')">◀</div>
-            <div class="d-btn" id="btn-down" onclick="move('down')">▼</div>
-            <div class="d-btn" id="btn-right" onclick="move('right')">▶</div>
-        </div>
-        <div>
-            <button class="combat-btn" onclick="attack()">BITE</button>
-        </div>
-    </div>
-
-<script>
-    // 1. INITIALIZE FIREBASE (PASTE YOUR CONFIG HERE)
-    const firebaseConfig = {
-  	apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
-  	authDomain: "sovereignhunt.firebaseapp.com",
-  	databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
-  	projectId: "sovereignhunt"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // --- THE WHITELIST ---
-    // Only these identifiers are allowed to enter the server. Add names here as you grow the pack.
-    const WHITELIST = {
-        "JERRY": true,
-        "AMANDA": true
-    };
-
-    // 2. ASSETS & MASSIVE 100x100 MAP
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    
-    // Auto-resize canvas to window
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    const TILE_SIZE = 50; 
-    const COLS = 100; // 4x Larger Arena
-    const ROWS = 100;
-
-    const imgAlpha = new Image(); imgAlpha.src = "alpha.jpg";
-    const imgLone = new Image(); imgLone.src = "lone.jpg";
-
-    let map = [];
-    // Generate massive wastes
-    for(let r=0; r<ROWS; r++){
-        let row = [];
-        for(let c=0; c<COLS; c++){
-            if(r===0 || r===ROWS-1 || c===0 || c===COLS-1) row.push(1); // Border
-            else if(Math.random() < 0.08) row.push(1); // Cactus Obstacles (8% density)
-            else row.push(0); // Sand
-        }
-        map.push(row);
-    }
-
-    // Carve out The Alpha's Den in the center (from 45 to 55)
-    for(let r=45; r<=55; r++){
-        for(let c=45; c<=55; c++){
-            if (r===45 || r===55 || c===45 || c===55) map[r][c] = 1; // Den Outer Wall
-            else map[r][c] = 2; // Den Inner Floor
-        }
-    }
-    // Entrance (South opening)
-    map[55][50] = 2; map[55][49] = 2; map[55][51] = 2;
-    // Throne/Altar
-    map[50][50] = 3;
-
-    let myPlayerId = "";
-    let myName = "";
-    let isAlpha = false;
-    let players = {}; 
-    let rabbits = {};
-    
-    // Distant spawn corners
-    const corners = [[5,5], [94,5], [5,94], [94,94]];
-
-    function startGame() {
-        myName = document.getElementById("player-name").value.trim().toUpperCase();
-        
-        // Security Gate
-        if (!WHITELIST[myName]) {
-            alert("ACCESS DENIED. Your identifier is not recognized by the Alpha's protocol.");
-            return;
-        }
-
-        if (myName === "JERRY") {
-            myName = "THE ALPHA";
-            isAlpha = true;
-            document.getElementById("alpha-dashboard").style.display = "block";
-        }
-
-        document.getElementById("login-screen").style.display = "none";
-        myPlayerId = "player_" + Math.floor(Math.random() * 100000);
-        
-        let spawn = isAlpha ? [50,50] : corners[Math.floor(Math.random() * corners.length)];
-
-        db.ref("players/" + myPlayerId).set({
-            name: myName,
-            x: spawn[0],
-            y: spawn[1],
-            isAlpha: isAlpha,
-            status: "playing",
-            hp: 100,
-            offering: "",
-            biteTarget: null
-        });
-
-        db.ref("players/" + myPlayerId).onDisconnect().remove();
-
-        db.ref("players").on("value", (snapshot) => {
-            players = snapshot.val() || {};
-            checkMyState(); 
-            if(isAlpha) renderAlphaDashboard();
-        });
-
-        // Initialize Rabbits if none exist
-        db.ref("rabbits").once("value", snap => {
-            if (!snap.exists()) {
-                let initRabbits = {};
-                for(let i=0; i<40; i++) { // Spawn 40 rabbits
-                    initRabbits["rabbit_"+i] = { x: Math.floor(Math.random()*90)+5, y: Math.floor(Math.random()*90)+5 };
-                }
-                db.ref("rabbits").set(initRabbits);
-            }
-        });
-
-        db.ref("rabbits").on("value", snap => {
-            rabbits = snap.val() || {};
-        });
-
-        db.ref("settings/alphaMessage").on("value", (snapshot) => {
-            const msg = snapshot.val();
-            if (msg) document.getElementById("alpha-broadcast").innerText = msg;
-        });
-
-        window.addEventListener("keydown", handleKeydown);
-        requestAnimationFrame(gameLoop);
-        
-        // Decentralized Rabbit Wandering
-        setInterval(wanderRabbits, 2000);
-    }
-
-    function wanderRabbits() {
-        if (!players[myPlayerId] || players[myPlayerId].status !== 'playing') return;
-        let rabbitKeys = Object.keys(rabbits);
-        if (rabbitKeys.length > 0 && Math.random() < 0.3) {
-             let rKey = rabbitKeys[Math.floor(Math.random() * rabbitKeys.length)];
-             let rb = rabbits[rKey];
-             let moveDir = Math.floor(Math.random() * 4);
-             let nx = rb.x, ny = rb.y;
-             if (moveDir===0) nx++; if (moveDir===1) nx--;
-             if (moveDir===2) ny++; if (moveDir===3) ny--;
-             if (nx>0 && nx<COLS-1 && ny>0 && ny<ROWS-1 && map[ny][nx] !== 1) {
-                 db.ref("rabbits/" + rKey).update({x: nx, y: ny});
-             }
-        }
-    }
-
-    function updateAlphaMessage() {
-        const msg = document.getElementById("alpha-msg-input").value;
-        if(msg) db.ref("settings/alphaMessage").set(msg);
-    }
-
-    function checkMyState() {
-        if (isAlpha) return;
-        const myData = players[myPlayerId];
-        if (!myData) return;
-
-        if (myData.hp <= 0 && myData.status === "playing") {
-            let spawn = corners[Math.floor(Math.random() * corners.length)];
-            db.ref("players/" + myPlayerId).update({ hp: 100, x: spawn[0], y: spawn[1] });
-            alert("FATAL BITE. You have been dominated by a rival and banished to the edge of the wastes.");
-        }
-
-        if (myData.status === "review") {
-            document.getElementById("lock-screen").style.display = "flex";
-            document.getElementById("altar-modal").style.display = "none";
-        } else if (myData.status === "accepted") {
-            document.getElementById("lock-screen").style.display = "none";
-            document.getElementById("victory-screen").style.display = "flex";
-        } else if (myData.status === "rejected") {
-            document.getElementById("lock-screen").style.display = "none";
-            document.getElementById("rejected-screen").style.display = "flex";
-        } else if (myData.status === "playing") {
-            document.getElementById("lock-screen").style.display = "none";
-            document.getElementById("victory-screen").style.display = "none";
-            document.getElementById("rejected-screen").style.display = "none";
-        }
-    }
-
-    function acknowledgeRejection() {
-        let spawn = corners[Math.floor(Math.random() * corners.length)];
-        db.ref("players/" + myPlayerId).update({ 
-            status: "playing", 
-            x: spawn[0], 
-            y: spawn[1],
-            hp: 100,
-            offering: ""
-        });
-    }
-
-    function handleKeydown(e) {
-        if (e.key === "ArrowUp" || e.key === "w") move('up');
-        if (e.key === "ArrowDown" || e.key === "s") move('down');
-        if (e.key === "ArrowLeft" || e.key === "a") move('left');
-        if (e.key === "ArrowRight" || e.key === "d") move('right');
-        if (e.key === " ") attack(); 
-    }
-
-    function move(dir) {
-        if (!players[myPlayerId] || players[myPlayerId].status !== "playing") return;
-        let newX = players[myPlayerId].x;
-        let newY = players[myPlayerId].y;
-
-        if (dir === 'up') newY--;
-        if (dir === 'down') newY++;
-        if (dir === 'left') newX--;
-        if (dir === 'right') newX++;
-
-        if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS) {
-            if (map[newY][newX] !== 1) { 
-                db.ref("players/" + myPlayerId).update({ x: newX, y: newY, biteTarget: null }); 
-                
-                if (map[newY][newX] === 3 && !isAlpha) {
-                    document.getElementById("altar-modal").style.display = "block";
-                } else {
-                    document.getElementById("altar-modal").style.display = "none";
-                }
-            }
-        }
-    }
-
-    function attack() {
-        if (!players[myPlayerId] || players[myPlayerId].status !== "playing" || isAlpha) return;
-        let myX = players[myPlayerId].x;
-        let myY = players[myPlayerId].y;
-        let didHit = false;
-
-        // Check Players
-        for (let id in players) {
-            if (id !== myPlayerId && players[id].status === "playing" && !players[id].isAlpha) {
-                if (Math.abs(players[id].x - myX) <= 1 && Math.abs(players[id].y - myY) <= 1) {
-                    db.ref("players/" + id).update({ hp: players[id].hp - 35 });
-                    didHit = true;
-                    db.ref("players/" + myPlayerId).update({ biteTarget: {x: players[id].x, y: players[id].y, time: Date.now()} });
-                }
-            }
-        }
-
-        // Check Rabbits (Easy Kills for HP)
-        for (let rKey in rabbits) {
-            let rb = rabbits[rKey];
-            if (Math.abs(rb.x - myX) <= 1 && Math.abs(rb.y - myY) <= 1) {
-                // Kill rabbit, restore 20 HP, respawn rabbit
-                let newHp = Math.min(100, players[myPlayerId].hp + 20);
-                db.ref("players/" + myPlayerId).update({ hp: newHp, biteTarget: {x: rb.x, y: rb.y, time: Date.now()} });
-                db.ref("rabbits/" + rKey).update({ x: Math.floor(Math.random()*90)+5, y: Math.floor(Math.random()*90)+5 });
-                didHit = true;
-            }
-        }
-        
-        if(!didHit) {
-             db.ref("players/" + myPlayerId).update({ biteTarget: {x: myX, y: myY-1, time: Date.now()} });
-        }
-    }
-
-    function gameLoop() {
-        if (players[myPlayerId]) drawGame();
-        requestAnimationFrame(gameLoop);
-    }
-
-    function drawGame() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        let me = players[myPlayerId];
-        let camX = (me.x * TILE_SIZE) - (canvas.width / 2) + (TILE_SIZE / 2);
-        let camY = (me.y * TILE_SIZE) - (canvas.height / 2) + (TILE_SIZE / 2);
-        
-        camX = Math.max(0, Math.min(camX, COLS * TILE_SIZE - canvas.width));
-        camY = Math.max(0, Math.min(camY, ROWS * TILE_SIZE - canvas.height));
-
-        // Parallax Moon
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.arc(canvas.width - 80, 80, 40, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#050505"; // Shadow for crescent
-        ctx.beginPath();
-        ctx.arc(canvas.width - 95, 70, 35, 0, Math.PI * 2);
-        ctx.fill();
-
-        for (let row = 0; row < ROWS; row++) {
-            for (let col = 0; col < COLS; col++) {
-                let drawX = (col * TILE_SIZE) - camX;
-                let drawY = (row * TILE_SIZE) - camY;
-
-                if (drawX > -TILE_SIZE && drawX < canvas.width && drawY > -TILE_SIZE && drawY < canvas.height) {
-                    let tile = map[row][col];
-                    
-                    ctx.fillStyle = "#0f0f0f"; // Base Sand
-                    ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
-                    ctx.strokeStyle = "#121212";
-                    ctx.strokeRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
-
-                    if (tile === 1) { 
-                        // Draw Cactus instead of a box
-                        ctx.fillStyle = "#1a331a"; // Dark desert green
-                        ctx.fillRect(drawX + 20, drawY + 10, 10, 40); // Main stem
-                        ctx.fillRect(drawX + 10, drawY + 20, 10, 15); // Left arm
-                        ctx.fillRect(drawX + 30, drawY + 15, 10, 15); // Right arm
-                    } 
-                    else if (tile === 2) { 
-                        ctx.fillStyle = "#110a0a"; // Den Floor
-                        ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
-                    } 
-                    else if (tile === 3) { 
-                        ctx.fillStyle = "#4a0000"; // Throne
-                        ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
-                    }
-                }
-            }
-        }
-
-        // Draw Rabbits (Small white/grey dots)
-        for (let rKey in rabbits) {
-            let rb = rabbits[rKey];
-            let drawX = (rb.x * TILE_SIZE) - camX;
-            let drawY = (rb.y * TILE_SIZE) - camY;
-            if (drawX > -50 && drawX < canvas.width && drawY > -50 && drawY < canvas.height) {
-                ctx.fillStyle = "#aaaaaa";
-                ctx.beginPath();
-                ctx.arc(drawX + 25, drawY + 25, 8, 0, Math.PI*2);
-                ctx.fill();
-            }
-        }
-
-        // Draw Players & Bites
-        for (let id in players) {
-            let p = players[id];
-            if (!p || p.status !== "playing" && p.status !== "review" && p.status !== "rejected") continue;
-
-            let drawX = (p.x * TILE_SIZE) - camX;
-            let drawY = (p.y * TILE_SIZE) - camY;
+        <div id="ui-overlay">
+            <div id="puzzle-status">Obelisks: <span id="orb-count">0/3</span></div>
+            <div id="dynamic-text"></div>
             
-            if (drawX > -150 && drawX < canvas.width + 150 && drawY > -150 && drawY < canvas.height + 150) {
-                
-                let avatarSize = 100; // Double Size Icons
-                let offset = (avatarSize - TILE_SIZE) / 2; 
-                
-                if (p.isAlpha) {
-                    if (imgAlpha.complete && imgAlpha.naturalHeight !== 0) {
-                        ctx.drawImage(imgAlpha, drawX - offset, drawY - offset, avatarSize, avatarSize);
-                    } else {
-                        ctx.fillStyle = "#d4af37"; ctx.fillRect(drawX - offset, drawY - offset, avatarSize, avatarSize);
-                    }
+            <div id="joystick-zone"><div id="joystick-stick"></div></div>
+            <div id="action-btn">BITE</div>
+        </div>
+
+        <div id="alpha-menu">
+            <h3>👑 Sovereign Control</h3>
+            <input type="text" id="new-user-input" class="alpha-input" placeholder="New Wolf Name...">
+            <button class="alpha-btn" onclick="authorizeUser()">Authorize Wolf</button>
+            <hr style="border-color:#333;">
+            <input type="text" id="alpha-msg" class="alpha-input" placeholder="Speak to the pack...">
+            <button class="alpha-btn" onclick="sendAlphaText()">Broadcast</button>
+            <button class="alpha-btn" onclick="clearAlphaText()" style="background:#222; border-color:#555; color:#aaa;">Silence Pack</button>
+            <hr style="border-color:#333;">
+            <h4 style="margin:5px 0;">Offerings (Progress)</h4>
+            <div id="submission-list"></div>
+        </div>
+    </div>
+
+    <div id="submission-modal">
+        <h2>Submit to the Alpha</h2>
+        <p>You have fallen, or you have reached the Den.<br><br>You must submit a photo showcasing your physical progress for the Alpha's gaze.</p>
+        <label class="custom-file-upload">
+            <input type="file" id="photo-upload" accept="image/*" onchange="handleFileSelect(event)">
+            📸 Select Photo Offering
+        </label>
+        <p id="file-name-display" style="color: var(--sovereign-gold); font-weight:bold; font-size:0.9rem;"></p>
+        <button id="final-submit-btn" onclick="uploadAndSubmit()" style="background:var(--sovereign-gold); color:black; display:none; width:80%;">Offer to Sovereign</button>
+    </div>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
+            authDomain: "sovereignhunt.firebaseapp.com",
+            databaseURL: "https://sovereignhunt-default-rtdb.firebaseio.com",
+            projectId: "sovereignhunt",
+            storageBucket: "sovereignhunt.firebasestorage.app",
+            messagingSenderId: "657296200169",
+            appId: "1:657296200169:web:22a0f9364344e682083b78"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Game Constants & State
+        const MAP_SIZE = 4000;
+        const DEN_POS = { x: 2000, y: 2000 }; 
+        const HIT_RADIUS = 90;
+        const PLAYER_RADIUS = 30;
+
+        let role = "", myName = "", myId = "";
+        let myPos = { x: 100, y: 100 };
+        let myHp = 50;
+        let isDead = false;
+        
+        let obstacles = [];
+        let mobs = []; // Holds both Scorpions and Rabbits
+        let obelisks = [
+            { id: 'ob1', x: 500, y: 3500 },
+            { id: 'ob2', x: 3500, y: 500 },
+            { id: 'ob3', x: 3500, y: 3500 }
+        ];
+        let puzzleState = { ob1: false, ob2: false, ob3: false };
+        let barrierActive = true;
+
+        let moveState = { up: false, down: false, left: false, right: false }; 
+        let joyV = { x: 0, y: 0 }; 
+        let compressedImageBase64 = null;
+
+        // Init DB basics
+        db.ref('allowed_users').once('value', snap => {
+            if(!snap.exists()) {
+                db.ref('allowed_users/the alpha').set(true);
+                db.ref('allowed_users/amanda').set(true);
+            }
+        });
+        db.ref('puzzle').once('value', snap => {
+            if(!snap.exists()) db.ref('puzzle').set({ ob1: false, ob2: false, ob3: false });
+        });
+
+        // --- Auth ---
+        function login() {
+            const rawInput = document.getElementById("login-input").value.trim();
+            const inputLower = rawInput.toLowerCase();
+            const errorText = document.getElementById("login-error");
+            if(inputLower === "") return;
+
+            db.ref('allowed_users/' + inputLower).once('value', snap => {
+                if(snap.exists()) {
+                    myName = rawInput;
+                    if(inputLower === "the alpha") { role = "alpha"; myId = "alpha_main"; } 
+                    else { role = "wolf"; myId = "wolf_" + inputLower.replace(/\s+/g, ''); }
+                    startGame();
                 } else {
-                    if (imgLone.complete && imgLone.naturalHeight !== 0) {
-                        ctx.drawImage(imgLone, drawX - offset, drawY - offset, avatarSize, avatarSize);
-                    } else {
-                        ctx.fillStyle = "#555"; ctx.fillRect(drawX - offset, drawY - offset, avatarSize, avatarSize);
-                    }
-                    
-                    // HP Bar
-                    ctx.fillStyle = "#333"; ctx.fillRect(drawX, drawY - 15, TILE_SIZE, 6);
-                    ctx.fillStyle = "#ff3333"; ctx.fillRect(drawX, drawY - 15, (p.hp / 100) * TILE_SIZE, 6);
+                    errorText.innerText = "Unrecognized moniker. The Alpha has not authorized you.";
+                    errorText.style.display = "block";
                 }
+            });
+        }
 
-                ctx.fillStyle = p.isAlpha ? "#d4af37" : "#ffffff";
-                ctx.font = "16px Arial";
-                ctx.textAlign = "center";
-                ctx.fillText(p.name, drawX + (TILE_SIZE/2), drawY - 25);
+        // --- Game Init ---
+        function startGame() {
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("game-viewport").style.display = "block";
+            
+            buildLandscape();
+            setupControls();
 
-                // DRAW BITE
-                if (p.biteTarget && (Date.now() - p.biteTarget.time < 300)) { 
-                    drawTeeth((p.biteTarget.x * TILE_SIZE) - camX, (p.biteTarget.y * TILE_SIZE) - camY);
-                }
+            if (role === "alpha") {
+                document.getElementById("alpha-menu").style.display = "block";
+                document.getElementById("action-btn").innerText = "BLESS";
+                document.getElementById("action-btn").style.background = "radial-gradient(circle, #D4AF37, #8B6508)";
+                document.getElementById("action-btn").style.color = "black";
+                myPos = { x: DEN_POS.x, y: DEN_POS.y }; 
+                db.ref('alphaLoc').set(myPos); 
+            } else {
+                // Spawn randomly away from center
+                myPos = { x: Math.random() * 800 + 200, y: Math.random() * 800 + 200 }; 
+                db.ref('wolves/' + myId).set({ name: myName, hp: 50, x: myPos.x, y: myPos.y });
+                spawnMobs();
+            }
+
+            requestAnimationFrame(gameLoop);
+            listenToDatabase();
+        }
+
+        function buildLandscape() {
+            const map = document.getElementById("world-map");
+            
+            // Central Den
+            let den = document.createElement("div");
+            den.className = "entity";
+            den.style.left = DEN_POS.x + "px"; den.style.top = DEN_POS.y + "px";
+            den.innerHTML = `<div style="font-size:6rem;">🕳️</div><div style="color:var(--sovereign-gold); font-weight:bold; font-size:2rem; text-shadow: 2px 2px 5px black;">The Den</div>`;
+            map.appendChild(den);
+
+            // Magic Barrier
+            let barrier = document.getElementById("barrier");
+            barrier.style.left = (DEN_POS.x - 250) + "px";
+            barrier.style.top = (DEN_POS.y - 250) + "px";
+            barrier.style.width = "500px"; barrier.style.height = "500px";
+            barrier.style.display = "block";
+            obstacles.push({ id: 'barrier', x: DEN_POS.x - 250, y: DEN_POS.y - 250, w: 500, h: 500 });
+
+            // Obelisks
+            obelisks.forEach(ob => {
+                let el = document.createElement("div");
+                el.className = "obelisk"; el.id = ob.id;
+                el.style.left = ob.x + "px"; el.style.top = ob.y + "px";
+                el.innerHTML = "🗿";
+                map.appendChild(el);
+            });
+
+            // Rock Mazes
+            function addWall(x, y, w, h) {
+                let wEl = document.createElement("div");
+                wEl.className = "rock-wall";
+                wEl.style.left = x + "px"; wEl.style.top = y + "px";
+                wEl.style.width = w + "px"; wEl.style.height = h + "px";
+                wEl.innerText = "🪨";
+                map.appendChild(wEl);
+                obstacles.push({x, y, w, h});
+            }
+
+            // Scatter massive canyon walls
+            for(let i=0; i<30; i++) {
+                let rx = Math.random() * (MAP_SIZE - 400);
+                let ry = Math.random() * (MAP_SIZE - 400);
+                // Keep center clear
+                if (Math.hypot(rx - DEN_POS.x, ry - DEN_POS.y) < 600) continue; 
+                let isVert = Math.random() > 0.5;
+                addWall(rx, ry, isVert ? 80 : 400, isVert ? 400 : 80);
+            }
+
+            // Flora
+            const flora = ["🌵", "🌿", "🦴"];
+            for(let i=0; i<100; i++) {
+                let f = document.createElement("div");
+                f.className = "decor";
+                f.style.left = Math.random() * MAP_SIZE + "px";
+                f.style.top = Math.random() * MAP_SIZE + "px";
+                f.innerText = flora[Math.floor(Math.random() * flora.length)];
+                map.appendChild(f);
             }
         }
-    }
 
-    function drawTeeth(drawX, drawY) {
-        ctx.fillStyle = "#ffffff"; 
-        ctx.beginPath(); ctx.moveTo(drawX, drawY); ctx.lineTo(drawX + 10, drawY + 20); ctx.lineTo(drawX + 25, drawY); ctx.lineTo(drawX + 40, drawY + 20); ctx.lineTo(drawX + 50, drawY); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(drawX, drawY + 50); ctx.lineTo(drawX + 10, drawY + 30); ctx.lineTo(drawX + 25, drawY + 50); ctx.lineTo(drawX + 40, drawY + 30); ctx.lineTo(drawX + 50, drawY + 50); ctx.fill();
-    }
+        // --- Controls ---
+        function setupControls() {
+            const zone = document.getElementById('joystick-zone');
+            const stick = document.getElementById('joystick-stick');
+            const maxRadius = 45; 
 
-    function submitOffering() {
-        const fileInput = document.getElementById("offering-file");
-        if (fileInput.files && fileInput.files[0]) {
+            function handleJoy(e) {
+                e.preventDefault(); 
+                if (e.targetTouches.length === 0) {
+                    joyV.x = 0; joyV.y = 0;
+                    stick.style.transform = `translate(-50%, -50%)`;
+                    return;
+                }
+                const touch = e.targetTouches[0];
+                const rect = zone.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > maxRadius) { dx = (dx / dist) * maxRadius; dy = (dy / dist) * maxRadius; }
+                stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                joyV.x = dx / maxRadius; joyV.y = dy / maxRadius;
+            }
+
+            zone.addEventListener('touchstart', handleJoy, {passive: false});
+            zone.addEventListener('touchmove', handleJoy, {passive: false});
+            zone.addEventListener('touchend', handleJoy, {passive: false});
+            zone.addEventListener('touchcancel', handleJoy, {passive: false});
+
+            document.getElementById('action-btn').addEventListener('touchstart', (e) => { e.preventDefault(); actionButton(); }, {passive: false});
+
+            window.addEventListener('keydown', (e) => {
+                if(e.key === "ArrowUp" || e.key.toLowerCase() === "w") moveState.up = true;
+                if(e.key === "ArrowDown" || e.key.toLowerCase() === "s") moveState.down = true;
+                if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a") moveState.left = true;
+                if(e.key === "ArrowRight" || e.key.toLowerCase() === "d") moveState.right = true;
+                if(e.key === " " || e.key === "Enter") actionButton();
+            });
+            window.addEventListener('keyup', (e) => {
+                if(e.key === "ArrowUp" || e.key.toLowerCase() === "w") moveState.up = false;
+                if(e.key === "ArrowDown" || e.key.toLowerCase() === "s") moveState.down = false;
+                if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a") moveState.left = false;
+                if(e.key === "ArrowRight" || e.key.toLowerCase() === "d") moveState.right = false;
+            });
+        }
+
+        // --- Database Sync ---
+        function listenToDatabase() {
+            db.ref('alpha/message').on('value', snap => {
+                document.getElementById("dynamic-text").innerText = snap.val() || "";
+            });
+
+            db.ref('puzzle').on('value', snap => {
+                puzzleState = snap.val() || puzzleState;
+                let count = 0;
+                obelisks.forEach(ob => {
+                    if(puzzleState[ob.id]) {
+                        document.getElementById(ob.id).classList.add('active');
+                        count++;
+                    }
+                });
+                document.getElementById("orb-count").innerText = `${count}/3`;
+                
+                if (count >= 3 && barrierActive) {
+                    barrierActive = false;
+                    document.getElementById("barrier").style.display = "none";
+                    obstacles = obstacles.filter(o => o.id !== 'barrier');
+                    document.getElementById("dynamic-text").innerText = "The Den is Open. Seek the Sovereign.";
+                    setTimeout(() => document.getElementById("dynamic-text").innerText="", 5000);
+                }
+            });
+
+            db.ref('alphaLoc').on('value', snap => {
+                const pos = snap.val();
+                if (pos) {
+                    let a = document.getElementById("alpha-entity");
+                    if (!a) {
+                        a = document.createElement("div");
+                        a.id = "alpha-entity";
+                        a.className = "entity";
+                        // Alpha Avatar: No crown, huge, breathing effect
+                        a.innerHTML = `<div class="avatar alpha-avatar">🐺</div><div class="name-tag" style="color:var(--sovereign-gold); font-size:1.2rem;">Sovereign Alpha</div>`;
+                        document.getElementById("world-map").appendChild(a);
+                    }
+                    a.style.left = pos.x + "px";
+                    a.style.top = pos.y + "px";
+                }
+            });
+
+            db.ref('wolves').on('value', snap => {
+                const map = document.getElementById("world-map");
+                document.querySelectorAll('.wolf-entity').forEach(e => e.remove());
+                const wolves = snap.val();
+                for (let id in wolves) {
+                    let w = wolves[id];
+                    let el = document.createElement("div");
+                    el.className = "entity wolf-entity";
+                    el.style.left = w.x + "px"; el.style.top = w.y + "px"; el.id = id;
+                    el.innerHTML = `<div class="avatar">🐺</div><div class="name-tag">${w.name}</div><div class="hp-bar">${w.hp} HP</div>`;
+                    map.appendChild(el);
+
+                    if (id === myId && role === "wolf") {
+                        myHp = w.hp;
+                        checkDeathState();
+                    }
+                }
+            });
+
+            if (role === "alpha") {
+                db.ref('submissions').on('value', snap => {
+                    const list = document.getElementById("submission-list");
+                    list.innerHTML = "";
+                    const subs = snap.val();
+                    for (let key in subs) {
+                        let sub = subs[key];
+                        list.innerHTML += `
+                        <div class="submission-card" id="sub-${key}">
+                            <p style="margin:0 0 10px 0; font-weight:bold; color:var(--flesh);">Offering from: <span style="color:var(--blood-red);">${sub.wolfName}</span></p>
+                            <img src="${sub.image}" class="submission-img">
+                            <button class="alpha-btn" onclick="grantHp('${sub.wolfId}', 50, '${key}')" style="background:var(--blood-red); border:none; color:white;">Grant 50 HP & Accept</button>
+                            <button class="alpha-btn" onclick="deleteSub('${key}')" style="background:#333;">Delete</button>
+                        </div>`;
+                    }
+                });
+            }
+        }
+
+        // --- Core Game Loop (Movement & Collisions & AI) ---
+        function isColliding(x, y) {
+            if(x < 20 || x > MAP_SIZE - 20 || y < 20 || y > MAP_SIZE - 20) return true;
+            for(let o of obstacles) {
+                // Simple box collision treating player as a point with radius
+                if(x + PLAYER_RADIUS > o.x && x - PLAYER_RADIUS < o.x + o.w && 
+                   y + PLAYER_RADIUS > o.y && y - PLAYER_RADIUS < o.y + o.h) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        let lastTime = Date.now();
+        function gameLoop() {
+            let now = Date.now();
+            let dt = (now - lastTime) / 1000;
+            lastTime = now;
+
+            if (!isDead) {
+                let speed = 8;
+                let vx = joyV.x * speed;
+                let vy = joyV.y * speed;
+
+                if (moveState.up) vy -= speed;
+                if (moveState.down) vy += speed;
+                if (moveState.left) vx -= speed;
+                if (moveState.right) vx += speed;
+
+                if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
+                    // Slide along walls (Test X and Y independently)
+                    if (!isColliding(myPos.x + vx, myPos.y)) myPos.x += vx;
+                    if (!isColliding(myPos.x, myPos.y + vy)) myPos.y += vy;
+
+                    if (role === "alpha") db.ref('alphaLoc').set(myPos);
+                    else db.ref('wolves/' + myId).update({ x: myPos.x, y: myPos.y });
+                }
+
+                // Run Local AI (only if Wolf)
+                if(role === "wolf") runMobAI(dt);
+            }
+
+            const map = document.getElementById("world-map");
+            const screenW = window.innerWidth / 2;
+            const screenH = window.innerHeight / 2;
+            map.style.transform = `translate(${screenW - myPos.x}px, ${screenH - myPos.y}px)`;
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- Hostile AI Engine ---
+        function spawnMobs() {
+            const map = document.getElementById("world-map");
+            // Rabbits
+            for(let i=0; i<15; i++) {
+                mobs.push({ id: "mob_r_"+i, type: 'rabbit', x: Math.random()*MAP_SIZE, y: Math.random()*MAP_SIZE, hp: 10, dmg: 1, speed: 150, lastAtk: 0, alive: true });
+            }
+            // Scorpions
+            for(let i=0; i<15; i++) {
+                mobs.push({ id: "mob_s_"+i, type: 'scorpion', x: Math.random()*MAP_SIZE, y: Math.random()*MAP_SIZE, hp: 20, dmg: 5, speed: 200, lastAtk: 0, alive: true });
+            }
+
+            mobs.forEach(m => {
+                let el = document.createElement("div");
+                el.className = "entity"; el.id = m.id;
+                el.innerHTML = m.type === 'rabbit' ? `<div style="font-size:2rem;">🐇</div>` : `<div style="font-size:2.5rem; filter: drop-shadow(0 0 5px red);">🦂</div>`;
+                map.appendChild(el);
+            });
+        }
+
+        function runMobAI(dt) {
+            let hpChanged = false;
+            mobs.forEach(m => {
+                if(!m.alive) return;
+                let dist = Math.hypot(m.x - myPos.x, m.y - myPos.y);
+                let el = document.getElementById(m.id);
+                
+                if(m.type === 'scorpion') {
+                    // Scorpion chases if close
+                    if (dist < 600 && dist > 40) {
+                        m.x += ((myPos.x - m.x) / dist) * m.speed * dt;
+                        m.y += ((myPos.y - m.y) / dist) * m.speed * dt;
+                    } else if (dist <= 40 && Date.now() - m.lastAtk > 1500) {
+                        myHp -= m.dmg; hpChanged = true; m.lastAtk = Date.now();
+                        el.style.transform = "translate(-50%, -50%) scale(1.5)";
+                        setTimeout(()=> el.style.transform = "translate(-50%, -50%) scale(1)", 200);
+                    }
+                } else if(m.type === 'rabbit') {
+                    // Rabbit flees if close
+                    if (dist < 300 && dist > 40) {
+                        m.x -= ((myPos.x - m.x) / dist) * m.speed * dt;
+                        m.y -= ((myPos.y - m.y) / dist) * m.speed * dt;
+                        // Bounce off edges
+                        m.x = Math.max(50, Math.min(MAP_SIZE-50, m.x));
+                        m.y = Math.max(50, Math.min(MAP_SIZE-50, m.y));
+                    } else if (dist <= 40 && Date.now() - m.lastAtk > 1000) {
+                        myHp -= m.dmg; hpChanged = true; m.lastAtk = Date.now();
+                    }
+                }
+                
+                if (el) { el.style.left = m.x + "px"; el.style.top = m.y + "px"; }
+            });
+
+            if(hpChanged) {
+                db.ref('wolves/' + myId + '/hp').set(myHp);
+                checkDeathState();
+            }
+        }
+
+        // --- Action / Combat ---
+        function actionButton() {
+            if (role === "wolf" && isDead) return;
+
+            const myAvatarDiv = document.getElementById(role === 'alpha' ? 'alpha-entity' : myId);
+            if(myAvatarDiv) {
+                const avatarIcon = myAvatarDiv.querySelector('.avatar');
+                avatarIcon.classList.add("biting");
+                setTimeout(() => avatarIcon.classList.remove("biting"), 300);
+            }
+
+            if (role === "alpha") {
+                db.ref('wolves').once('value', snap => {
+                    const wolves = snap.val();
+                    for (let id in wolves) {
+                        if (Math.hypot(wolves[id].x - myPos.x, wolves[id].y - myPos.y) <= HIT_RADIUS * 2) {
+                            db.ref('wolves/' + id + '/hp').set(wolves[id].hp + 30);
+                        }
+                    }
+                });
+            } else {
+                let hpGained = 0;
+                
+                // Bite Mobs
+                mobs.forEach(m => {
+                    if (m.alive && Math.hypot(m.x - myPos.x, m.y - myPos.y) <= HIT_RADIUS) {
+                        m.hp -= 10;
+                        if(m.hp <= 0) {
+                            m.alive = false;
+                            let el = document.getElementById(m.id);
+                            if(el) el.remove();
+                            hpGained += (m.type === 'scorpion' ? 10 : 5);
+                        }
+                    }
+                });
+
+                // Bite Wolves
+                db.ref('wolves').once('value', snap => {
+                    const wolves = snap.val();
+                    for (let id in wolves) {
+                        if (id !== myId && Math.hypot(wolves[id].x - myPos.x, wolves[id].y - myPos.y) <= HIT_RADIUS) {
+                            let newHp = wolves[id].hp - 10;
+                            db.ref('wolves/' + id + '/hp').set(newHp);
+                            if(newHp <= 0 && wolves[id].hp > 0) hpGained += 20;
+                        }
+                    }
+                    if (hpGained > 0) db.ref('wolves/' + myId + '/hp').set(myHp + hpGained);
+                });
+
+                // Bite Obelisks
+                obelisks.forEach(ob => {
+                    if (!puzzleState[ob.id] && Math.hypot(ob.x - myPos.x, ob.y - myPos.y) <= HIT_RADIUS * 1.5) {
+                        db.ref('puzzle/' + ob.id).set(true);
+                    }
+                });
+            }
+        }
+
+        // --- Death & Submission ---
+        function checkDeathState() {
+            const nearDen = Math.hypot(myPos.x - DEN_POS.x, myPos.y - DEN_POS.y) < 150;
+            
+            if (myHp <= 0 || (nearDen && !barrierActive)) {
+                isDead = true;
+                document.getElementById("joystick-zone").style.display = "none";
+                document.getElementById("action-btn").style.display = "none";
+                document.getElementById("submission-modal").style.display = "flex";
+            } else if (isDead && myHp > 0) {
+                isDead = false;
+                document.getElementById("joystick-zone").style.display = "block";
+                document.getElementById("action-btn").style.display = "flex";
+                document.getElementById("submission-modal").style.display = "none";
+                if(nearDen) { myPos.y += 300; db.ref('wolves/' + myId).update({y: myPos.y}); }
+            }
+        }
+
+        // --- Photo Compression & Upload ---
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById("file-name-display").innerText = "Processing image...";
             const reader = new FileReader();
             reader.onload = function(e) {
-                const base64Image = e.target.result;
-                db.ref("players/" + myPlayerId).update({ status: "review", offering: base64Image });
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('compressor');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_DIM = 600;
+                    let width = img.width, height = img.height;
+                    if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; } 
+                    else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
+                    canvas.width = width; canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                    document.getElementById("file-name-display").innerText = "Offering Ready.";
+                    document.getElementById("final-submit-btn").style.display = "block";
+                };
+                img.src = e.target.result;
             };
-            reader.readAsDataURL(fileInput.files[0]);
+            reader.readAsDataURL(file);
         }
-    }
 
-    function renderAlphaDashboard() {
-        const list = document.getElementById("offerings-list");
-        list.innerHTML = "";
-        let hasPending = false;
-
-        for (let id in players) {
-            let p = players[id];
-            if (p.status === "review" && p.offering !== "") {
-                hasPending = true;
-                list.innerHTML += `
-                    <div class="offering-card">
-                        <h3 style="color:#d4af37; margin-top:0;">${p.name} awaits your judgment.</h3>
-                        <img src="${p.offering}" />
-                        <br>
-                        <button style="color:#00ff00; border-color:#00ff00; background:rgba(0,50,0,0.5);" onclick="judgeWolf('${id}', 'accepted', '${p.name}')">ACCEPT</button>
-                        <button style="color:#ea4335; border-color:#ea4335; background:rgba(50,0,0,0.5);" onclick="judgeWolf('${id}', 'rejected', '${p.name}')">REJECT</button>
-                    </div>
-                `;
-            }
+        function uploadAndSubmit() {
+            if (!compressedImageBase64) return;
+            document.getElementById("final-submit-btn").innerText = "Submitting...";
+            db.ref('submissions').push({
+                wolfId: myId, wolfName: myName, image: compressedImageBase64, timestamp: Date.now()
+            }).then(() => {
+                document.getElementById("final-submit-btn").innerText = "Offering Received. Await the Alpha.";
+                document.getElementById("final-submit-btn").disabled = true;
+            });
         }
-        if (!hasPending) list.innerHTML = "<p style='color:#8c8c8c;'>No offerings currently under review. The pack is hunting.</p>";
-    }
 
-    function judgeWolf(playerId, verdict, playerName) {
-        if (verdict === 'accepted') {
-            db.ref("players/" + playerId).update({ status: "accepted" });
-            db.ref("settings/alphaMessage").set(`The Alpha has ACCEPTED an offering from ${playerName}.`);
-        } else {
-            db.ref("players/" + playerId).update({ status: "rejected" });
-            db.ref("settings/alphaMessage").set(`The Alpha has REJECTED an offering from ${playerName}. They have been banished.`);
+        // --- Alpha Controls ---
+        function authorizeUser() {
+            const newName = document.getElementById("new-user-input").value.toLowerCase().trim();
+            if(newName) { db.ref('allowed_users/' + newName).set(true); alert(`'${newName}' has been authorized.`); document.getElementById("new-user-input").value = ""; }
         }
-    }
-</script>
+        function sendAlphaText() { db.ref('alpha/message').set(document.getElementById("alpha-msg").value); }
+        function clearAlphaText() { db.ref('alpha/message').set(""); }
+        function grantHp(targetId, amount, subKey) {
+            db.ref('wolves/' + targetId + '/hp').once('value', snap => {
+                db.ref('wolves/' + targetId + '/hp').set((snap.val() || 0) + amount);
+                db.ref('alpha/message').set(`${targetId.replace('wolf_', '')} has pleased the Sovereign. Progress rewarded.`);
+                deleteSub(subKey);
+            });
+        }
+        function deleteSub(subKey) { db.ref('submissions/' + subKey).remove(); }
+    </script>
 </body>
 </html>
