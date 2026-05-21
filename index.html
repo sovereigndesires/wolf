@@ -10,18 +10,19 @@
     
     <style>
         :root {
-            --obsidian: #0B0C10;
-            --charcoal: #1F2833;
-            --blood-red: #8A0303;
-            --sovereign-gold: #D4AF37;
-            --flesh: #EAEAEA;
+            --obsidian: #090a0f;
+            --charcoal: #151a22;
+            --blood-red: #9e0000;
+            --deep-blood: #5a0000;
+            --sovereign-gold: #e6c27a;
+            --flesh: #e3d3c8;
         }
 
-        * { -webkit-user-select: none; user-select: none; }
+        * { -webkit-user-select: none; user-select: none; box-sizing: border-box; }
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Georgia', serif; /* More elegant, sensual font */
             background-color: var(--obsidian); color: var(--flesh);
             overflow: hidden; touch-action: none; 
         }
@@ -30,85 +31,119 @@
         #login-screen {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100vh; width: 100vw;
-            background: radial-gradient(circle at center, #1a0000, var(--obsidian));
+            background: radial-gradient(circle at center, #1f0000, var(--obsidian));
             position: absolute; z-index: 1000;
         }
 
-        #login-screen h1 { font-size: 2.5rem; color: var(--blood-red); text-shadow: 2px 2px 10px rgba(138, 3, 3, 0.8); text-align: center; margin-bottom: 5px; }
-        #login-screen p { color: var(--sovereign-gold); font-style: italic; margin-bottom: 30px; text-align: center; padding: 0 20px;}
+        #login-screen h1 { font-size: 3rem; color: var(--blood-red); text-shadow: 0 0 20px rgba(158, 0, 0, 0.8); text-align: center; margin-bottom: 5px; font-weight: normal; text-transform: uppercase; letter-spacing: 3px;}
+        #login-screen p { color: var(--sovereign-gold); font-style: italic; margin-bottom: 30px; text-align: center; padding: 0 20px; font-size: 1.1rem; line-height: 1.5; max-width: 400px;}
 
         input[type="text"] {
             padding: 15px; font-size: 1.2rem; margin: 10px; width: 80%; max-width: 300px;
-            border: 1px solid var(--blood-red); border-radius: 8px; background: #000; color: white; text-align: center;
-            -webkit-user-select: auto; user-select: auto;
+            border: 1px solid var(--blood-red); border-radius: 4px; background: rgba(0,0,0,0.6); color: var(--flesh); text-align: center;
+            -webkit-user-select: auto; user-select: auto; font-family: inherit;
         }
+        input[type="text"]:focus { outline: none; border-color: var(--sovereign-gold); box-shadow: 0 0 10px var(--sovereign-gold); }
 
         button {
-            padding: 15px 30px; font-size: 1.2rem; margin-top: 10px;
-            background-color: var(--blood-red); color: white; border: none; border-radius: 8px; font-weight: bold;
-            box-shadow: 0px 4px 15px rgba(138, 3, 3, 0.5); text-transform: uppercase; letter-spacing: 1px; transition: transform 0.1s;
+            padding: 15px 30px; font-size: 1.1rem; margin-top: 10px;
+            background: linear-gradient(135deg, var(--blood-red), var(--deep-blood)); color: var(--flesh); border: 1px solid var(--sovereign-gold); border-radius: 4px; font-weight: bold;
+            box-shadow: 0px 4px 15px rgba(158, 0, 0, 0.4); text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s; cursor: pointer;
         }
-        button:active { transform: scale(0.95); }
+        button:active { transform: scale(0.95); box-shadow: 0px 0px 5px rgba(158, 0, 0, 0.8); }
 
-        /* --- Game World --- */
+        /* --- Game World & Texture --- */
         #game-viewport { position: relative; width: 100vw; height: 100vh; overflow: hidden; display: none; }
 
         #world-map {
             position: absolute; width: 4000px; height: 4000px;
-            background: radial-gradient(circle, var(--charcoal) 0%, #050505 100%);
+            background: linear-gradient(135deg, #11141a 0%, #050505 100%);
             transition: transform 0.1s linear; transform-origin: top left;
+        }
+        
+        /* Ground Grit/Sand Detail */
+        #world-map::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(rgba(230, 194, 122, 0.1) 1px, transparent 1px),
+                radial-gradient(rgba(158, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px; background-position: 0 0, 15px 15px;
+            pointer-events: none; z-index: 0;
         }
 
         /* Landscape */
-        .rock-wall { position: absolute; background: #111; border: 2px solid #222; box-shadow: inset 0 0 20px #000, 0 0 15px rgba(0,0,0,0.8); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 2rem; overflow: hidden; }
-        .moon { position: absolute; top: 2000px; left: 2000px; font-size: 15rem; filter: drop-shadow(0 0 50px #FFFFAA); opacity: 0.3; transform: translate(-50%, -50%); pointer-events: none; }
-        .decor { position: absolute; font-size: 2rem; opacity: 0.3; pointer-events: none; }
+        .rock-wall { position: absolute; background: linear-gradient(45deg, #050505, #1a1a1a); border: 1px solid #333; box-shadow: inset 0 0 15px #000, 5px 5px 20px rgba(0,0,0,0.8); border-radius: 4px; z-index: 10; }
+        .moon { position: absolute; top: 2000px; left: 2000px; font-size: 20rem; filter: drop-shadow(0 0 80px rgba(255, 255, 170, 0.4)); opacity: 0.15; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; }
+        .decor { position: absolute; font-size: 2rem; opacity: 0.4; pointer-events: none; z-index: 5; filter: drop-shadow(2px 2px 5px black); }
         
-        .magic-barrier { position: absolute; border: 4px dashed var(--blood-red); background: rgba(138, 3, 3, 0.2); box-shadow: 0 0 30px var(--blood-red); border-radius: 20px; }
-        .obelisk { font-size: 4rem; position: absolute; transform: translate(-50%, -50%); transition: all 0.5s; filter: drop-shadow(0 0 10px black); }
-        .obelisk.active { filter: drop-shadow(0 0 30px var(--sovereign-gold)); }
+        .magic-barrier { position: absolute; border: 2px solid var(--blood-red); background: radial-gradient(circle, rgba(158,0,0,0.1), rgba(158,0,0,0.3)); box-shadow: 0 0 50px var(--blood-red), inset 0 0 30px var(--deep-blood); border-radius: 50%; z-index: 15; animation: pulse-barrier 4s infinite alternate; }
+        @keyframes pulse-barrier { 0% { opacity: 0.8; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1.02); } }
+        
+        .obelisk { font-size: 3.5rem; position: absolute; transform: translate(-50%, -50%); transition: all 0.5s; filter: drop-shadow(0 0 15px black); z-index: 20; }
+        .obelisk.active { filter: drop-shadow(0 0 40px var(--sovereign-gold)) drop-shadow(0 0 20px var(--blood-red)); animation: throb 2s infinite alternate; }
 
         /* Entities */
-        .entity { position: absolute; user-select: none; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; transition: left 0.1s linear, top 0.1s linear; }
+        .entity { position: absolute; user-select: none; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; transition: left 0.1s linear, top 0.1s linear; z-index: 30; }
         
-        .avatar { font-size: 3.5rem; position: relative; }
+        .avatar { font-size: 3.5rem; position: relative; filter: drop-shadow(2px 5px 5px black); }
         .alpha-avatar { 
-            font-size: 8rem; /* Made much larger */
-            filter: drop-shadow(0px 0px 30px var(--blood-red)) drop-shadow(0px 0px 10px var(--sovereign-gold)); 
-            animation: breathe 3s infinite alternate;
+            font-size: 7rem; 
+            filter: drop-shadow(0px 0px 40px var(--blood-red)) drop-shadow(0px 0px 15px var(--sovereign-gold)); 
+            animation: throb 3s infinite alternate;
         }
 
-        @keyframes breathe { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+        @keyframes throb { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
 
-        .name-tag { font-size: 0.8rem; font-weight: bold; color: #ccc; margin-top: -5px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
-        .hp-bar { font-size: 0.9rem; background: var(--blood-red); color: white; border-radius: 3px; padding: 2px 8px; margin-top: 2px; font-weight: bold; border: 1px solid black; }
+        .name-tag { font-size: 0.8rem; font-family: 'Helvetica Neue', sans-serif; font-weight: bold; color: var(--sovereign-gold); margin-top: -5px; background: rgba(0,0,0,0.8); padding: 3px 8px; border-radius: 4px; border: 1px solid #333; letter-spacing: 1px;}
+        .hp-bar { font-size: 0.7rem; font-family: 'Helvetica Neue', sans-serif; background: var(--blood-red); color: white; border-radius: 2px; padding: 2px 8px; margin-top: 4px; font-weight: bold; border: 1px solid black; box-shadow: 0 0 10px rgba(158,0,0,0.5); }
 
-        @keyframes bite-anim { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
-        .biting::after { content: "🦷"; position: absolute; left: 0; top: 0; font-size: 4rem; animation: bite-anim 0.3s ease-in-out; text-shadow: 0 0 10px red; }
+        /* Visceral Multi-Tooth Bite */
+        @keyframes jaw-snap {
+            0% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+            40% { transform: translate(-50%, -50%) scale(0.9); opacity: 1; text-shadow: 0 0 20px red; }
+            60% { transform: translate(-50%, -50%) scale(0.9); opacity: 1; text-shadow: 0 0 30px red; }
+            100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+        }
+        .biting::after { 
+            content: "🦷🩸🦷\A 🦷"; 
+            white-space: pre; line-height: 0.8; text-align: center;
+            position: absolute; left: 50%; top: 50%; 
+            font-size: 4rem; animation: jaw-snap 0.4s ease-out forwards; 
+            pointer-events: none; z-index: 50; 
+        }
 
         /* UI Overlays */
         #ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
-        #dynamic-text { position: absolute; top: 10%; width: 100%; text-align: center; font-size: 2rem; color: var(--sovereign-gold); text-shadow: 2px 2px 8px #000; font-weight: bold; padding: 0 20px; box-sizing: border-box; }
-        #puzzle-status { position: absolute; top: 20px; left: 20px; font-size: 1.2rem; color: var(--flesh); text-shadow: 1px 1px 5px black; font-weight: bold; }
+        #dynamic-text { position: absolute; top: 15%; width: 100%; text-align: center; font-size: 2.2rem; color: var(--sovereign-gold); text-shadow: 0px 0px 15px rgba(230, 194, 122, 0.5), 2px 2px 5px #000; font-style: italic; padding: 0 20px; }
+        #puzzle-status { position: absolute; top: 20px; left: 20px; font-size: 1.1rem; color: var(--blood-red); text-shadow: 1px 1px 5px black; font-weight: bold; letter-spacing: 1px;}
 
-        #joystick-zone { position: absolute; bottom: 30px; left: 20px; width: 130px; height: 130px; background: rgba(138, 3, 3, 0.2); border: 2px solid var(--blood-red); border-radius: 50%; pointer-events: auto; touch-action: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
-        #joystick-stick { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: radial-gradient(circle, var(--blood-red), #4a0000); border: 2px solid #000; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        /* Controls */
+        #joystick-zone { position: absolute; bottom: 30px; left: 20px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(158,0,0,0.1), rgba(0,0,0,0.8)); border: 2px solid rgba(158,0,0,0.5); border-radius: 50%; pointer-events: auto; touch-action: none; box-shadow: inset 0 0 30px rgba(0,0,0,0.9); }
+        #joystick-stick { position: absolute; top: 50%; left: 50%; width: 55px; height: 55px; background: radial-gradient(circle, var(--blood-red), #2a0000); border: 2px solid #000; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
 
-        #action-btn { position: absolute; bottom: 45px; right: 20px; width: 100px; height: 100px; background: radial-gradient(circle, var(--blood-red), #4a0000); border: 2px solid #000; border-radius: 50%; color: white; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; box-shadow: 0 0 20px rgba(138,3,3,0.8); touch-action: none; }
-        #action-btn:active { transform: scale(0.9); }
+        #action-btn { position: absolute; bottom: 45px; right: 20px; width: 110px; height: 110px; background: radial-gradient(circle, var(--deep-blood), #1a0000); border: 2px solid var(--blood-red); border-radius: 50%; color: var(--flesh); font-weight: bold; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; box-shadow: 0 0 30px rgba(158,0,0,0.6); touch-action: none; letter-spacing: 1px; font-family: 'Helvetica Neue', sans-serif;}
+        #action-btn:active { transform: scale(0.9); background: radial-gradient(circle, var(--blood-red), var(--deep-blood)); }
 
-        /* Alpha Dashboard & Modals */
-        #alpha-menu { position: absolute; top: 10px; right: 10px; pointer-events: auto; background: rgba(0,0,0,0.8); border: 1px solid var(--sovereign-gold); border-radius: 8px; padding: 10px; max-width: 60%; max-height: 80vh; overflow-y: auto; display: none; }
-        #alpha-menu h3 { color: var(--sovereign-gold); margin: 0 0 10px 0; font-size: 1.2rem; }
-        .alpha-input { width: 90%; padding: 8px; margin-bottom: 5px; background: #222; color: white; border: 1px solid #555; -webkit-user-select: auto; user-select: auto;}
-        .alpha-btn { width: 100%; padding: 8px; font-size: 0.9rem; background: #333; color: var(--sovereign-gold); border: 1px solid var(--sovereign-gold); margin-bottom: 10px; }
-        .submission-card { background: #111; border: 1px solid var(--blood-red); padding: 10px; margin-bottom: 10px; border-radius: 5px; text-align: center; }
-        .submission-img { max-width: 100%; max-height: 200px; border-radius: 5px; margin-bottom: 10px; pointer-events: auto; -webkit-touch-callout: default; }
+        /* Minimizable Alpha Dashboard */
+        #alpha-dashboard-wrapper { position: absolute; top: 20px; right: 20px; z-index: 300; pointer-events: auto; display: none; align-items: flex-end; flex-direction: column; }
+        #alpha-menu-toggle { background: linear-gradient(135deg, var(--sovereign-gold), #8B6508); color: black; border: none; padding: 10px 20px; font-weight: bold; font-size: 1rem; border-radius: 4px; box-shadow: 0 0 15px rgba(230,194,122,0.4); cursor: pointer; text-transform: uppercase; }
+        
+        #alpha-menu { background: rgba(10, 10, 15, 0.95); border: 1px solid var(--sovereign-gold); border-radius: 8px; padding: 15px; width: 300px; max-height: 70vh; overflow-y: auto; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); display: none; }
+        #alpha-menu h3 { color: var(--sovereign-gold); margin: 0 0 15px 0; font-size: 1.3rem; font-style: italic; border-bottom: 1px solid #333; padding-bottom: 5px;}
+        .alpha-input { width: 100%; padding: 10px; margin-bottom: 10px; background: #050505; color: var(--flesh); border: 1px solid #444; border-radius: 4px; -webkit-user-select: auto; user-select: auto; font-family: inherit;}
+        .alpha-input:focus { outline: none; border-color: var(--sovereign-gold); }
+        .alpha-btn { width: 100%; padding: 10px; font-size: 0.9rem; background: #1a1a1a; color: var(--sovereign-gold); border: 1px solid var(--sovereign-gold); margin-bottom: 15px; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;}
+        .alpha-btn:hover { background: #333; }
+        
+        .submission-card { background: #050505; border: 1px solid var(--blood-red); padding: 10px; margin-bottom: 15px; border-radius: 4px; text-align: center; }
+        .submission-img { max-width: 100%; max-height: 250px; border-radius: 4px; margin-bottom: 10px; pointer-events: auto; -webkit-touch-callout: default; border: 1px solid #333;}
 
-        #submission-modal { display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 12, 16, 0.95); z-index: 500; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; padding: 20px; box-sizing: border-box; text-align: center; }
-        #submission-modal h2 { color: var(--blood-red); font-size: 2rem; margin-bottom: 10px;}
-        #submission-modal p { color: #aaa; font-size: 1.1rem; margin-bottom: 20px; line-height: 1.4; }
-        .custom-file-upload { display: inline-block; padding: 15px 30px; cursor: pointer; background: #222; border: 2px dashed var(--sovereign-gold); color: var(--sovereign-gold); border-radius: 8px; font-size: 1.2rem; margin-bottom: 20px; width: 80%; }
+        /* Submission Modal */
+        #submission-modal { display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(5, 5, 8, 0.95); z-index: 500; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; padding: 20px; text-align: center; backdrop-filter: blur(5px); }
+        #submission-modal h2 { color: var(--blood-red); font-size: 2.5rem; margin-bottom: 15px; font-weight: normal; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 20px var(--blood-red);}
+        #submission-modal p { color: var(--flesh); font-size: 1.2rem; margin-bottom: 30px; line-height: 1.6; max-width: 500px; font-style: italic; }
+        .custom-file-upload { display: inline-block; padding: 15px 30px; cursor: pointer; background: rgba(230,194,122,0.1); border: 1px solid var(--sovereign-gold); color: var(--sovereign-gold); border-radius: 4px; font-size: 1.2rem; margin-bottom: 20px; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;}
+        .custom-file-upload:hover { background: rgba(230,194,122,0.2); }
         input[type="file"] { display: none; }
         #compressor { display: none; }
     </style>
@@ -119,10 +154,10 @@
 
     <div id="login-screen">
         <h1>The Sovereign's Hunt</h1>
-        <p>Present yourself. Only approved subjects may enter.</p>
-        <input type="text" id="login-input" placeholder="Enter your moniker...">
-        <button onclick="login()">Submit to the Hunt</button>
-        <p id="login-error" style="color:#ff4444; display:none; font-weight:bold; margin-top:15px;"></p>
+        <p>A primal ground where Lone Wolves bare their devotion. Strip your ego. Present yourself. Only the chosen may enter to bleed for his gaze.</p>
+        <input type="text" id="login-input" placeholder="Whisper your moniker...">
+        <button onclick="login()">Enter the Hunt</button>
+        <p id="login-error" style="color:var(--blood-red); display:none; font-weight:bold; margin-top:15px; letter-spacing: 1px;"></p>
     </div>
 
     <div id="game-viewport">
@@ -132,36 +167,44 @@
         </div>
 
         <div id="ui-overlay">
-            <div id="puzzle-status">Obelisks: <span id="orb-count">0/3</span></div>
+            <div id="puzzle-status">Pillars of Submission: <span id="orb-count" style="color:var(--flesh);">0/3</span></div>
             <div id="dynamic-text"></div>
             
             <div id="joystick-zone"><div id="joystick-stick"></div></div>
             <div id="action-btn">BITE</div>
         </div>
 
-        <div id="alpha-menu">
-            <h3>👑 Sovereign Control</h3>
-            <input type="text" id="new-user-input" class="alpha-input" placeholder="New Wolf Name...">
-            <button class="alpha-btn" onclick="authorizeUser()">Authorize Wolf</button>
-            <hr style="border-color:#333;">
-            <input type="text" id="alpha-msg" class="alpha-input" placeholder="Speak to the pack...">
-            <button class="alpha-btn" onclick="sendAlphaText()">Broadcast</button>
-            <button class="alpha-btn" onclick="clearAlphaText()" style="background:#222; border-color:#555; color:#aaa;">Silence Pack</button>
-            <hr style="border-color:#333;">
-            <h4 style="margin:5px 0;">Offerings (Progress)</h4>
-            <div id="submission-list"></div>
+        <div id="alpha-dashboard-wrapper">
+            <button id="alpha-menu-toggle" onclick="toggleAlphaMenu()">👑 Command Pack</button>
+            <div id="alpha-menu">
+                <h3>The Sovereign's Will</h3>
+                
+                <input type="text" id="new-user-input" class="alpha-input" placeholder="Name of the new submissive...">
+                <button class="alpha-btn" onclick="authorizeUser()">Authorize Wolf</button>
+                
+                <hr style="border-color:#333; margin: 15px 0;">
+                
+                <input type="text" id="alpha-msg" class="alpha-input" placeholder="Speak your demands...">
+                <button class="alpha-btn" onclick="sendAlphaText()">Broadcast</button>
+                <button class="alpha-btn" onclick="clearAlphaText()" style="background:#111; color:#777; border-color:#333;">Silence Pack</button>
+                
+                <hr style="border-color:#333; margin: 15px 0;">
+                
+                <h4 style="margin:0 0 10px 0; color:var(--blood-red); font-style:italic; font-weight:normal;">Offerings of Devotion</h4>
+                <div id="submission-list"></div>
+            </div>
         </div>
     </div>
 
     <div id="submission-modal">
-        <h2>Submit to the Alpha</h2>
-        <p>You have fallen, or you have reached the Den.<br><br>You must submit a photo showcasing your physical progress for the Alpha's gaze.</p>
+        <h2>Succumb to Lust</h2>
+        <p>You have fallen to your knees. Your body aches, driven by a deep, primal desperation for the Sovereign's attention.<br><br>Offer your flesh. Submit a visual of your devotion to beg for his touch and renewed vitality.</p>
         <label class="custom-file-upload">
             <input type="file" id="photo-upload" accept="image/*" onchange="handleFileSelect(event)">
-            📸 Select Photo Offering
+            📸 Select Body Offering
         </label>
-        <p id="file-name-display" style="color: var(--sovereign-gold); font-weight:bold; font-size:0.9rem;"></p>
-        <button id="final-submit-btn" onclick="uploadAndSubmit()" style="background:var(--sovereign-gold); color:black; display:none; width:80%;">Offer to Sovereign</button>
+        <p id="file-name-display" style="color: var(--sovereign-gold); font-weight:bold; font-size:0.9rem; letter-spacing: 1px;"></p>
+        <button id="final-submit-btn" onclick="uploadAndSubmit()" style="display:none; width:80%; max-width:300px;">Offer to Sovereign</button>
     </div>
 
     <script>
@@ -190,11 +233,11 @@
         let isDead = false;
         
         let obstacles = [];
-        let mobs = []; // Holds both Scorpions and Rabbits
+        let mobs = []; 
         let obelisks = [
-            { id: 'ob1', x: 500, y: 3500 },
-            { id: 'ob2', x: 3500, y: 500 },
-            { id: 'ob3', x: 3500, y: 3500 }
+            { id: 'ob1', x: 800, y: 3200 },
+            { id: 'ob2', x: 3200, y: 800 },
+            { id: 'ob3', x: 3200, y: 3200 }
         ];
         let puzzleState = { ob1: false, ob2: false, ob3: false };
         let barrierActive = true;
@@ -202,6 +245,7 @@
         let moveState = { up: false, down: false, left: false, right: false }; 
         let joyV = { x: 0, y: 0 }; 
         let compressedImageBase64 = null;
+        let alphaMenuOpen = false;
 
         // Init DB basics
         db.ref('allowed_users').once('value', snap => {
@@ -228,7 +272,7 @@
                     else { role = "wolf"; myId = "wolf_" + inputLower.replace(/\s+/g, ''); }
                     startGame();
                 } else {
-                    errorText.innerText = "Unrecognized moniker. The Alpha has not authorized you.";
+                    errorText.innerText = "The Sovereign rejects this name. You are not authorized.";
                     errorText.style.display = "block";
                 }
             });
@@ -243,14 +287,14 @@
             setupControls();
 
             if (role === "alpha") {
-                document.getElementById("alpha-menu").style.display = "block";
+                document.getElementById("alpha-dashboard-wrapper").style.display = "flex";
                 document.getElementById("action-btn").innerText = "BLESS";
                 document.getElementById("action-btn").style.background = "radial-gradient(circle, #D4AF37, #8B6508)";
+                document.getElementById("action-btn").style.borderColor = "#000";
                 document.getElementById("action-btn").style.color = "black";
                 myPos = { x: DEN_POS.x, y: DEN_POS.y }; 
                 db.ref('alphaLoc').set(myPos); 
             } else {
-                // Spawn randomly away from center
                 myPos = { x: Math.random() * 800 + 200, y: Math.random() * 800 + 200 }; 
                 db.ref('wolves/' + myId).set({ name: myName, hp: 50, x: myPos.x, y: myPos.y });
                 spawnMobs();
@@ -267,18 +311,18 @@
             let den = document.createElement("div");
             den.className = "entity";
             den.style.left = DEN_POS.x + "px"; den.style.top = DEN_POS.y + "px";
-            den.innerHTML = `<div style="font-size:6rem;">🕳️</div><div style="color:var(--sovereign-gold); font-weight:bold; font-size:2rem; text-shadow: 2px 2px 5px black;">The Den</div>`;
+            den.innerHTML = `<div style="font-size:6rem; filter: drop-shadow(0 0 20px #000);">🕳️</div><div style="color:var(--sovereign-gold); font-weight:bold; font-size:1.8rem; text-shadow: 0 0 15px black; font-style:italic;">The Sovereign's Den</div>`;
             map.appendChild(den);
 
-            // Magic Barrier
+            // Magic Barrier (Alpha passes freely, Wolves cannot until solved)
             let barrier = document.getElementById("barrier");
-            barrier.style.left = (DEN_POS.x - 250) + "px";
-            barrier.style.top = (DEN_POS.y - 250) + "px";
-            barrier.style.width = "500px"; barrier.style.height = "500px";
+            barrier.style.left = (DEN_POS.x - 300) + "px";
+            barrier.style.top = (DEN_POS.y - 300) + "px";
+            barrier.style.width = "600px"; barrier.style.height = "600px";
             barrier.style.display = "block";
-            obstacles.push({ id: 'barrier', x: DEN_POS.x - 250, y: DEN_POS.y - 250, w: 500, h: 500 });
+            obstacles.push({ id: 'barrier', x: DEN_POS.x - 300, y: DEN_POS.y - 300, w: 600, h: 600 });
 
-            // Obelisks
+            // Pillars of Submission (Obelisks)
             obelisks.forEach(ob => {
                 let el = document.createElement("div");
                 el.className = "obelisk"; el.id = ob.id;
@@ -287,30 +331,27 @@
                 map.appendChild(el);
             });
 
-            // Rock Mazes
+            // Rock Walls
             function addWall(x, y, w, h) {
                 let wEl = document.createElement("div");
                 wEl.className = "rock-wall";
                 wEl.style.left = x + "px"; wEl.style.top = y + "px";
                 wEl.style.width = w + "px"; wEl.style.height = h + "px";
-                wEl.innerText = "🪨";
                 map.appendChild(wEl);
-                obstacles.push({x, y, w, h});
+                obstacles.push({id: 'wall', x, y, w, h});
             }
 
-            // Scatter massive canyon walls
-            for(let i=0; i<30; i++) {
+            for(let i=0; i<35; i++) {
                 let rx = Math.random() * (MAP_SIZE - 400);
                 let ry = Math.random() * (MAP_SIZE - 400);
-                // Keep center clear
-                if (Math.hypot(rx - DEN_POS.x, ry - DEN_POS.y) < 600) continue; 
+                if (Math.hypot(rx - DEN_POS.x, ry - DEN_POS.y) < 700) continue; 
                 let isVert = Math.random() > 0.5;
-                addWall(rx, ry, isVert ? 80 : 400, isVert ? 400 : 80);
+                addWall(rx, ry, isVert ? 100 : 500, isVert ? 500 : 100);
             }
 
             // Flora
-            const flora = ["🌵", "🌿", "🦴"];
-            for(let i=0; i<100; i++) {
+            const flora = ["🌵", "🌿", "🦴", "🥀"];
+            for(let i=0; i<150; i++) {
                 let f = document.createElement("div");
                 f.className = "decor";
                 f.style.left = Math.random() * MAP_SIZE + "px";
@@ -368,6 +409,12 @@
             });
         }
 
+        function toggleAlphaMenu() {
+            alphaMenuOpen = !alphaMenuOpen;
+            document.getElementById("alpha-menu").style.display = alphaMenuOpen ? "block" : "none";
+            document.getElementById("alpha-menu-toggle").innerText = alphaMenuOpen ? "✖ Close Commands" : "👑 Command Pack";
+        }
+
         // --- Database Sync ---
         function listenToDatabase() {
             db.ref('alpha/message').on('value', snap => {
@@ -388,9 +435,8 @@
                 if (count >= 3 && barrierActive) {
                     barrierActive = false;
                     document.getElementById("barrier").style.display = "none";
-                    obstacles = obstacles.filter(o => o.id !== 'barrier');
-                    document.getElementById("dynamic-text").innerText = "The Den is Open. Seek the Sovereign.";
-                    setTimeout(() => document.getElementById("dynamic-text").innerText="", 5000);
+                    document.getElementById("dynamic-text").innerText = "The Den is Open. Present yourself to Him.";
+                    setTimeout(() => document.getElementById("dynamic-text").innerText="", 6000);
                 }
             });
 
@@ -402,8 +448,7 @@
                         a = document.createElement("div");
                         a.id = "alpha-entity";
                         a.className = "entity";
-                        // Alpha Avatar: No crown, huge, breathing effect
-                        a.innerHTML = `<div class="avatar alpha-avatar">🐺</div><div class="name-tag" style="color:var(--sovereign-gold); font-size:1.2rem;">Sovereign Alpha</div>`;
+                        a.innerHTML = `<div class="avatar alpha-avatar">🐺</div><div class="name-tag" style="color:var(--sovereign-gold); font-size:1.1rem; letter-spacing:2px; text-transform:uppercase;">The Sovereign</div>`;
                         document.getElementById("world-map").appendChild(a);
                     }
                     a.style.left = pos.x + "px";
@@ -420,7 +465,7 @@
                     let el = document.createElement("div");
                     el.className = "entity wolf-entity";
                     el.style.left = w.x + "px"; el.style.top = w.y + "px"; el.id = id;
-                    el.innerHTML = `<div class="avatar">🐺</div><div class="name-tag">${w.name}</div><div class="hp-bar">${w.hp} HP</div>`;
+                    el.innerHTML = `<div class="avatar">🐺</div><div class="name-tag">${w.name}</div><div class="hp-bar">${w.hp} VITALITY</div>`;
                     map.appendChild(el);
 
                     if (id === myId && role === "wolf") {
@@ -439,10 +484,10 @@
                         let sub = subs[key];
                         list.innerHTML += `
                         <div class="submission-card" id="sub-${key}">
-                            <p style="margin:0 0 10px 0; font-weight:bold; color:var(--flesh);">Offering from: <span style="color:var(--blood-red);">${sub.wolfName}</span></p>
+                            <p style="margin:0 0 10px 0; font-style:italic; color:var(--flesh);">Body offered by: <span style="color:var(--blood-red); font-weight:bold;">${sub.wolfName}</span></p>
                             <img src="${sub.image}" class="submission-img">
-                            <button class="alpha-btn" onclick="grantHp('${sub.wolfId}', 50, '${key}')" style="background:var(--blood-red); border:none; color:white;">Grant 50 HP & Accept</button>
-                            <button class="alpha-btn" onclick="deleteSub('${key}')" style="background:#333;">Delete</button>
+                            <button class="alpha-btn" onclick="grantHp('${sub.wolfId}', 50, '${key}')" style="background:var(--deep-blood); border-color:var(--blood-red); color:var(--flesh);">Accept & Bestow Vitality</button>
+                            <button class="alpha-btn" onclick="deleteSub('${key}')" style="background:#111; color:#555; border-color:#333;">Reject & Discard</button>
                         </div>`;
                     }
                 });
@@ -453,7 +498,10 @@
         function isColliding(x, y) {
             if(x < 20 || x > MAP_SIZE - 20 || y < 20 || y > MAP_SIZE - 20) return true;
             for(let o of obstacles) {
-                // Simple box collision treating player as a point with radius
+                // The Alpha is immune to the magic barrier
+                if (role === 'alpha' && o.id === 'barrier') continue; 
+                if (!barrierActive && o.id === 'barrier') continue;
+
                 if(x + PLAYER_RADIUS > o.x && x - PLAYER_RADIUS < o.x + o.w && 
                    y + PLAYER_RADIUS > o.y && y - PLAYER_RADIUS < o.y + o.h) {
                     return true;
@@ -479,7 +527,6 @@
                 if (moveState.right) vx += speed;
 
                 if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
-                    // Slide along walls (Test X and Y independently)
                     if (!isColliding(myPos.x + vx, myPos.y)) myPos.x += vx;
                     if (!isColliding(myPos.x, myPos.y + vy)) myPos.y += vy;
 
@@ -487,7 +534,6 @@
                     else db.ref('wolves/' + myId).update({ x: myPos.x, y: myPos.y });
                 }
 
-                // Run Local AI (only if Wolf)
                 if(role === "wolf") runMobAI(dt);
             }
 
@@ -502,19 +548,17 @@
         // --- Hostile AI Engine ---
         function spawnMobs() {
             const map = document.getElementById("world-map");
-            // Rabbits
             for(let i=0; i<15; i++) {
                 mobs.push({ id: "mob_r_"+i, type: 'rabbit', x: Math.random()*MAP_SIZE, y: Math.random()*MAP_SIZE, hp: 10, dmg: 1, speed: 150, lastAtk: 0, alive: true });
             }
-            // Scorpions
-            for(let i=0; i<15; i++) {
-                mobs.push({ id: "mob_s_"+i, type: 'scorpion', x: Math.random()*MAP_SIZE, y: Math.random()*MAP_SIZE, hp: 20, dmg: 5, speed: 200, lastAtk: 0, alive: true });
+            for(let i=0; i<20; i++) {
+                mobs.push({ id: "mob_s_"+i, type: 'scorpion', x: Math.random()*MAP_SIZE, y: Math.random()*MAP_SIZE, hp: 20, dmg: 5, speed: 220, lastAtk: 0, alive: true });
             }
 
             mobs.forEach(m => {
                 let el = document.createElement("div");
                 el.className = "entity"; el.id = m.id;
-                el.innerHTML = m.type === 'rabbit' ? `<div style="font-size:2rem;">🐇</div>` : `<div style="font-size:2.5rem; filter: drop-shadow(0 0 5px red);">🦂</div>`;
+                el.innerHTML = m.type === 'rabbit' ? `<div style="font-size:2rem; filter: drop-shadow(0 0 5px #fff);">🐇</div>` : `<div style="font-size:2.5rem; filter: drop-shadow(0 0 10px red);">🦂</div>`;
                 map.appendChild(el);
             });
         }
@@ -527,7 +571,6 @@
                 let el = document.getElementById(m.id);
                 
                 if(m.type === 'scorpion') {
-                    // Scorpion chases if close
                     if (dist < 600 && dist > 40) {
                         m.x += ((myPos.x - m.x) / dist) * m.speed * dt;
                         m.y += ((myPos.y - m.y) / dist) * m.speed * dt;
@@ -537,11 +580,9 @@
                         setTimeout(()=> el.style.transform = "translate(-50%, -50%) scale(1)", 200);
                     }
                 } else if(m.type === 'rabbit') {
-                    // Rabbit flees if close
                     if (dist < 300 && dist > 40) {
                         m.x -= ((myPos.x - m.x) / dist) * m.speed * dt;
                         m.y -= ((myPos.y - m.y) / dist) * m.speed * dt;
-                        // Bounce off edges
                         m.x = Math.max(50, Math.min(MAP_SIZE-50, m.x));
                         m.y = Math.max(50, Math.min(MAP_SIZE-50, m.y));
                     } else if (dist <= 40 && Date.now() - m.lastAtk > 1000) {
@@ -566,7 +607,7 @@
             if(myAvatarDiv) {
                 const avatarIcon = myAvatarDiv.querySelector('.avatar');
                 avatarIcon.classList.add("biting");
-                setTimeout(() => avatarIcon.classList.remove("biting"), 300);
+                setTimeout(() => avatarIcon.classList.remove("biting"), 400); // Wait for anim
             }
 
             if (role === "alpha") {
@@ -581,7 +622,7 @@
             } else {
                 let hpGained = 0;
                 
-                // Bite Mobs
+                // Attack Mobs
                 mobs.forEach(m => {
                     if (m.alive && Math.hypot(m.x - myPos.x, m.y - myPos.y) <= HIT_RADIUS) {
                         m.hp -= 10;
@@ -594,7 +635,7 @@
                     }
                 });
 
-                // Bite Wolves
+                // Attack Wolves (Desperate struggle)
                 db.ref('wolves').once('value', snap => {
                     const wolves = snap.val();
                     for (let id in wolves) {
@@ -607,7 +648,7 @@
                     if (hpGained > 0) db.ref('wolves/' + myId + '/hp').set(myHp + hpGained);
                 });
 
-                // Bite Obelisks
+                // Activate Pillars
                 obelisks.forEach(ob => {
                     if (!puzzleState[ob.id] && Math.hypot(ob.x - myPos.x, ob.y - myPos.y) <= HIT_RADIUS * 1.5) {
                         db.ref('puzzle/' + ob.id).set(true);
@@ -620,17 +661,19 @@
         function checkDeathState() {
             const nearDen = Math.hypot(myPos.x - DEN_POS.x, myPos.y - DEN_POS.y) < 150;
             
+            // Trigger if Vitality is 0, OR if they managed to crawl into the den and the barrier is down
             if (myHp <= 0 || (nearDen && !barrierActive)) {
                 isDead = true;
                 document.getElementById("joystick-zone").style.display = "none";
                 document.getElementById("action-btn").style.display = "none";
                 document.getElementById("submission-modal").style.display = "flex";
             } else if (isDead && myHp > 0) {
+                // Reborn / Granted vitality by Alpha
                 isDead = false;
                 document.getElementById("joystick-zone").style.display = "block";
                 document.getElementById("action-btn").style.display = "flex";
                 document.getElementById("submission-modal").style.display = "none";
-                if(nearDen) { myPos.y += 300; db.ref('wolves/' + myId).update({y: myPos.y}); }
+                if(nearDen) { myPos.y += 350; db.ref('wolves/' + myId).update({y: myPos.y}); }
             }
         }
 
@@ -638,7 +681,7 @@
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
-            document.getElementById("file-name-display").innerText = "Processing image...";
+            document.getElementById("file-name-display").innerText = "Preparing offering...";
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
@@ -652,7 +695,7 @@
                     canvas.width = width; canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    document.getElementById("file-name-display").innerText = "Offering Ready.";
+                    document.getElementById("file-name-display").innerText = "Body documented. Ready to kneel.";
                     document.getElementById("final-submit-btn").style.display = "block";
                 };
                 img.src = e.target.result;
@@ -666,7 +709,7 @@
             db.ref('submissions').push({
                 wolfId: myId, wolfName: myName, image: compressedImageBase64, timestamp: Date.now()
             }).then(() => {
-                document.getElementById("final-submit-btn").innerText = "Offering Received. Await the Alpha.";
+                document.getElementById("final-submit-btn").innerText = "You have submitted. Await His judgment.";
                 document.getElementById("final-submit-btn").disabled = true;
             });
         }
@@ -674,14 +717,14 @@
         // --- Alpha Controls ---
         function authorizeUser() {
             const newName = document.getElementById("new-user-input").value.toLowerCase().trim();
-            if(newName) { db.ref('allowed_users/' + newName).set(true); alert(`'${newName}' has been authorized.`); document.getElementById("new-user-input").value = ""; }
+            if(newName) { db.ref('allowed_users/' + newName).set(true); alert(`'${newName}' is now permitted to bleed for you.`); document.getElementById("new-user-input").value = ""; }
         }
         function sendAlphaText() { db.ref('alpha/message').set(document.getElementById("alpha-msg").value); }
         function clearAlphaText() { db.ref('alpha/message').set(""); }
         function grantHp(targetId, amount, subKey) {
             db.ref('wolves/' + targetId + '/hp').once('value', snap => {
                 db.ref('wolves/' + targetId + '/hp').set((snap.val() || 0) + amount);
-                db.ref('alpha/message').set(`${targetId.replace('wolf_', '')} has pleased the Sovereign. Progress rewarded.`);
+                db.ref('alpha/message').set(`${targetId.replace('wolf_', '')}'s body pleased the Sovereign. Rise.`);
                 deleteSub(subKey);
             });
         }
