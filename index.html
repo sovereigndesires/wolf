@@ -103,6 +103,7 @@
 
         .name-tag { font-size: 0.8rem; font-family: 'Helvetica Neue', sans-serif; font-weight: bold; color: var(--sovereign-gold); margin-top: -5px; background: rgba(0,0,0,0.8); padding: 3px 8px; border-radius: 4px; border: 1px solid #333; letter-spacing: 1px;}
         .hp-bar { font-size: 0.7rem; font-family: 'Helvetica Neue', sans-serif; background: var(--blood-red); color: white; border-radius: 2px; padding: 2px 8px; margin-top: 4px; font-weight: bold; border: 1px solid black; box-shadow: 0 0 10px rgba(158,0,0,0.5); }
+        .trophy-tag { font-size: 0.9rem; font-weight: bold; color: var(--sovereign-gold); text-shadow: 1px 1px 3px #000; margin-top: 2px; }
 
         /* Visceral Multi-Tooth Bite */
         @keyframes jaw-snap {
@@ -125,11 +126,11 @@
         #dynamic-text { position: absolute; top: 15%; width: 100%; text-align: center; font-size: 2.2rem; color: var(--sovereign-gold); text-shadow: 0px 0px 15px rgba(230, 194, 122, 0.5), 2px 2px 5px #000; font-style: italic; padding: 0 20px; }
         #puzzle-status { position: absolute; top: 20px; left: 20px; font-size: 1.1rem; color: var(--blood-red); text-shadow: 1px 1px 5px black; font-weight: bold; letter-spacing: 1px;}
 
-        /* Controls */
-        #joystick-zone { position: absolute; bottom: 30px; left: 20px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(158,0,0,0.1), rgba(0,0,0,0.8)); border: 2px solid rgba(158,0,0,0.5); border-radius: 50%; pointer-events: auto; touch-action: none; box-shadow: inset 0 0 30px rgba(0,0,0,0.9); }
+        /* Controls - MOVED UP FOR BETTER ERGONOMICS */
+        #joystick-zone { position: absolute; bottom: 80px; left: 20px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(158,0,0,0.1), rgba(0,0,0,0.8)); border: 2px solid rgba(158,0,0,0.5); border-radius: 50%; pointer-events: auto; touch-action: none; box-shadow: inset 0 0 30px rgba(0,0,0,0.9); }
         #joystick-stick { position: absolute; top: 50%; left: 50%; width: 55px; height: 55px; background: radial-gradient(circle, var(--blood-red), #2a0000); border: 2px solid #000; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
 
-        #action-btn { position: absolute; bottom: 45px; right: 20px; width: 110px; height: 110px; background: radial-gradient(circle, var(--deep-blood), #1a0000); border: 2px solid var(--blood-red); border-radius: 50%; color: var(--flesh); font-weight: bold; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; box-shadow: 0 0 30px rgba(158,0,0,0.6); touch-action: none; letter-spacing: 1px; font-family: 'Helvetica Neue', sans-serif;}
+        #action-btn { position: absolute; bottom: 95px; right: 20px; width: 110px; height: 110px; background: radial-gradient(circle, var(--deep-blood), #1a0000); border: 2px solid var(--blood-red); border-radius: 50%; color: var(--flesh); font-weight: bold; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; box-shadow: 0 0 30px rgba(158,0,0,0.6); touch-action: none; letter-spacing: 1px; font-family: 'Helvetica Neue', sans-serif;}
         #action-btn:active { transform: scale(0.9); background: radial-gradient(circle, var(--blood-red), var(--deep-blood)); }
 
         /* Minimizable Alpha Dashboard */
@@ -176,7 +177,7 @@
 
         <div id="low-hp-overlay"></div>
         <div id="ui-overlay">
-            <div id="puzzle-status">Pillars of Submission: <span id="orb-count" style="color:var(--flesh);">0/3</span></div>
+            <div id="puzzle-status">Pillar of Submission: <span id="orb-count" style="color:var(--flesh);">0/1</span></div>
             <div id="dynamic-text"></div>
             
             <div id="joystick-zone"><div id="joystick-stick"></div></div>
@@ -239,16 +240,17 @@
         let role = "", myName = "", myId = "";
         let myPos = { x: 0, y: 0 };
         let myHp = 50;
+        let myTrophies = 0;
         let isDead = false;
         
         let obstacles = [];
         let mobs = []; 
+        
+        // SIMPLIFIED TOTEM: Only 1 Pillar, placed distinctly outside the barrier
         let obelisks = [
-            { id: 'ob1', x: 800, y: 3200 },
-            { id: 'ob2', x: 3200, y: 800 },
-            { id: 'ob3', x: 3200, y: 3200 }
+            { id: 'ob1', x: 2000, y: 1600 } 
         ];
-        let puzzleState = { ob1: false, ob2: false, ob3: false };
+        let puzzleState = { ob1: false };
         let barrierActive = true;
 
         let moveState = { up: false, down: false, left: false, right: false }; 
@@ -264,7 +266,7 @@
             }
         });
         db.ref('puzzle').once('value', snap => {
-            if(!snap.exists()) db.ref('puzzle').set({ ob1: false, ob2: false, ob3: false });
+            if(!snap.exists()) db.ref('puzzle').set({ ob1: false });
         });
 
         // --- Core Auth & State Loading ---
@@ -280,10 +282,9 @@
                     if(inputLower === "the alpha") { role = "alpha"; myId = "alpha_main"; } 
                     else { role = "wolf"; myId = "wolf_" + inputLower.replace(/\s+/g, ''); }
                     
-                    // Build landscape so obstacles exist for collision checking
                     buildLandscape();
 
-                    // Restore or Create Player State
+                    // Restore or Create Player State (Now includes Trophies)
                     let refStr = role === "alpha" ? 'alphaLoc' : 'wolves/' + myId;
                     db.ref(refStr).once('value', userSnap => {
                         if (userSnap.exists()) {
@@ -291,7 +292,9 @@
                             if (role === "alpha") {
                                 myPos.x = data.x; myPos.y = data.y;
                             } else {
-                                myPos.x = data.x; myPos.y = data.y; myHp = data.hp || 50;
+                                myPos.x = data.x; myPos.y = data.y; 
+                                myHp = data.hp || 50;
+                                myTrophies = data.trophies || 0;
                             }
                         } else {
                             if (role === "alpha") {
@@ -299,6 +302,7 @@
                             } else {
                                 myPos = getSafeSpawn();
                                 myHp = 50;
+                                myTrophies = 0;
                             }
                         }
 
@@ -306,7 +310,7 @@
                         if (role === "alpha") {
                             db.ref('alphaLoc').set(myPos);
                         } else {
-                            db.ref('wolves/' + myId).update({ name: myName, hp: myHp, x: myPos.x, y: myPos.y });
+                            db.ref('wolves/' + myId).update({ name: myName, hp: myHp, x: myPos.x, y: myPos.y, trophies: myTrophies });
                             spawnMobs();
                         }
                         
@@ -354,14 +358,12 @@
         function buildLandscape() {
             const map = document.getElementById("world-map");
             
-            // Central Den
             let den = document.createElement("div");
             den.className = "entity";
             den.style.left = DEN_POS.x + "px"; den.style.top = DEN_POS.y + "px";
             den.innerHTML = `<div style="font-size:6rem; filter: drop-shadow(0 0 20px #000);">🕳️</div><div style="color:var(--sovereign-gold); font-weight:bold; font-size:1.8rem; text-shadow: 0 0 15px black; font-style:italic;">The Sovereign's Den</div>`;
             map.appendChild(den);
 
-            // Circular Magic Barrier (Radius 300)
             let barrier = document.getElementById("barrier");
             barrier.style.left = DEN_POS.x + "px";
             barrier.style.top = DEN_POS.y + "px";
@@ -369,7 +371,7 @@
             barrier.style.display = "block";
             obstacles.push({ id: 'barrier', x: DEN_POS.x, y: DEN_POS.y, r: 300 });
 
-            // Pillars of Submission (Obelisks)
+            // Render the single Pillar
             obelisks.forEach(ob => {
                 let el = document.createElement("div");
                 el.className = "obelisk"; el.id = ob.id;
@@ -378,13 +380,11 @@
                 map.appendChild(el);
             });
 
-            // Organic Circular Boulders
             for(let i=0; i<40; i++) {
-                let r = Math.random() * 80 + 60; // Size between 60 and 140
+                let r = Math.random() * 80 + 60; 
                 let rx, ry;
                 let safe = false;
                 
-                // Ensure den area is COMPLETELY free of rocks
                 while(!safe) {
                     rx = Math.random() * (MAP_SIZE - 200) + 100;
                     ry = Math.random() * (MAP_SIZE - 200) + 100;
@@ -398,7 +398,6 @@
                 bEl.style.left = rx + "px"; bEl.style.top = ry + "px";
                 bEl.style.width = (r*2) + "px"; bEl.style.height = (r*2) + "px";
                 
-                // Random organic shape
                 let br1 = Math.floor(Math.random() * 30 + 35);
                 let br2 = Math.floor(Math.random() * 30 + 35);
                 let br3 = Math.floor(Math.random() * 30 + 35);
@@ -409,7 +408,6 @@
                 obstacles.push({id: 'boulder', x: rx, y: ry, r: r});
             }
 
-            // Flora
             const flora = ["🌵", "🌿", "🦴", "🥀"];
             for(let i=0; i<150; i++) {
                 let f = document.createElement("div");
@@ -481,18 +479,17 @@
                 document.getElementById("dynamic-text").innerText = snap.val() || "";
             });
 
+            // Simplified Puzzle Sync
             db.ref('puzzle').on('value', snap => {
                 puzzleState = snap.val() || puzzleState;
                 let count = 0;
-                obelisks.forEach(ob => {
-                    if(puzzleState[ob.id]) {
-                        document.getElementById(ob.id).classList.add('active');
-                        count++;
-                    }
-                });
-                document.getElementById("orb-count").innerText = `${count}/3`;
+                if(puzzleState.ob1) {
+                    document.getElementById('ob1').classList.add('active');
+                    count++;
+                }
+                document.getElementById("orb-count").innerText = `${count}/1`;
                 
-                if (count >= 3 && barrierActive) {
+                if (count >= 1 && barrierActive) {
                     barrierActive = false;
                     document.getElementById("barrier").style.display = "none";
                     document.getElementById("dynamic-text").innerText = "The Den is Open. Present yourself to Him.";
@@ -525,15 +522,20 @@
                     let el = document.createElement("div");
                     el.className = "entity wolf-entity";
                     el.style.left = w.x + "px"; el.style.top = w.y + "px"; el.id = id;
-                    el.innerHTML = `<div class="avatar">🐺</div><div class="name-tag">${w.name}</div><div class="hp-bar">${w.hp} VITALITY</div>`;
+                    
+                    // Visual Trophy Display
+                    let trophyStr = (w.trophies && w.trophies > 0) ? `<div class="trophy-tag">🏆 x${w.trophies}</div>` : "";
+                    
+                    el.innerHTML = `<div class="avatar">🐺</div><div class="name-tag">${w.name}</div><div class="hp-bar">${w.hp} VITALITY</div>${trophyStr}`;
                     map.appendChild(el);
 
                     if (id === myId && role === "wolf") {
                         myHp = w.hp;
+                        myTrophies = w.trophies || 0;
                         checkDeathState();
                         
                         // Low HP Vignette
-                        if (myHp < 20) document.getElementById("low-hp-overlay").style.opacity = 1 - (myHp/20);
+                        if (myHp < 20 && myHp > 0) document.getElementById("low-hp-overlay").style.opacity = 1 - (myHp/20);
                         else document.getElementById("low-hp-overlay").style.opacity = 0;
                     }
                 }
@@ -550,7 +552,7 @@
                         <div class="submission-card" id="sub-${key}">
                             <p style="margin:0 0 10px 0; font-style:italic; color:var(--flesh);">Body offered by: <span style="color:var(--blood-red); font-weight:bold;">${sub.wolfName}</span></p>
                             <img src="${sub.image}" class="submission-img">
-                            <button class="alpha-btn" onclick="grantHp('${sub.wolfId}', 50, '${key}')" style="background:var(--deep-blood); border-color:var(--blood-red); color:var(--flesh);">Accept & Bestow Vitality</button>
+                            <button class="alpha-btn" onclick="grantHpAndTrophy('${sub.wolfId}', 50, '${key}')" style="background:var(--deep-blood); border-color:var(--blood-red); color:var(--flesh);">Accept Offering (Give Trophy)</button>
                             <button class="alpha-btn" onclick="deleteSub('${key}')" style="background:#111; color:#555; border-color:#333;">Reject & Discard</button>
                         </div>`;
                     }
@@ -558,16 +560,12 @@
             }
         }
 
-        // --- Core Game Loop (Movement & Circular Collisions & AI) ---
+        // --- Core Game Loop ---
         function isColliding(x, y) {
             if(x < 20 || x > MAP_SIZE - 20 || y < 20 || y > MAP_SIZE - 20) return true;
             for(let o of obstacles) {
-                // The Alpha is completely immune to the magic barrier
                 if (role === 'alpha' && o.id === 'barrier') continue; 
-                // Barrier turns off when puzzle solved
                 if (!barrierActive && o.id === 'barrier') continue;
-
-                // Radial collision (Smooth sliding)
                 if(o.r) {
                     if (Math.hypot(x - o.x, y - o.y) < o.r + PLAYER_RADIUS) return true;
                 }
@@ -592,7 +590,6 @@
                 if (moveState.right) vx += speed;
 
                 if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
-                    // Test X and Y independently to allow sliding
                     if (!isColliding(myPos.x + vx, myPos.y)) myPos.x += vx;
                     if (!isColliding(myPos.x, myPos.y + vy)) myPos.y += vy;
 
@@ -712,11 +709,10 @@
                     if (hpGained > 0) db.ref('wolves/' + myId + '/hp').set(myHp + hpGained);
                 });
 
-                obelisks.forEach(ob => {
-                    if (!puzzleState[ob.id] && Math.hypot(ob.x - myPos.x, ob.y - myPos.y) <= HIT_RADIUS * 1.5) {
-                        db.ref('puzzle/' + ob.id).set(true);
-                    }
-                });
+                // Check single Pillar
+                if (!puzzleState.ob1 && Math.hypot(obelisks[0].x - myPos.x, obelisks[0].y - myPos.y) <= HIT_RADIUS * 1.5) {
+                    db.ref('puzzle/ob1').set(true);
+                }
             }
         }
 
@@ -730,13 +726,6 @@
                 document.getElementById("action-btn").style.display = "none";
                 document.getElementById("submission-modal").style.display = "flex";
                 document.getElementById("low-hp-overlay").style.display = "none";
-            } else if (isDead && myHp > 0) {
-                isDead = false;
-                document.getElementById("joystick-zone").style.display = "block";
-                document.getElementById("action-btn").style.display = "flex";
-                document.getElementById("submission-modal").style.display = "none";
-                document.getElementById("low-hp-overlay").style.display = "block";
-                if(nearDen) { myPos.y += 350; db.ref('wolves/' + myId).update({y: myPos.y}); }
             }
         }
 
@@ -772,25 +761,49 @@
             db.ref('submissions').push({
                 wolfId: myId, wolfName: myName, image: compressedImageBase64, timestamp: Date.now()
             }).then(() => {
-                document.getElementById("final-submit-btn").innerText = "You have submitted. Await His judgment.";
-                document.getElementById("final-submit-btn").disabled = true;
+                // Post-Offering Respawn
+                document.getElementById("submission-modal").style.display = "none";
+                document.getElementById("joystick-zone").style.display = "block";
+                document.getElementById("action-btn").style.display = "flex";
+                
+                myHp = 50; 
+                myPos = getSafeSpawn(); 
+                isDead = false;
+                
+                db.ref('wolves/' + myId).update({ hp: myHp, x: myPos.x, y: myPos.y });
+                
+                // Reset form
+                compressedImageBase64 = null;
+                document.getElementById("final-submit-btn").style.display = "none";
+                document.getElementById("file-name-display").innerText = "";
+                document.getElementById("final-submit-btn").innerText = "Offer to Sovereign";
+                
+                alert("Your offering has been cast into the shadows. You are reborn to hunt while He judges you.");
             });
         }
 
-        // --- Alpha Controls ---
+        // --- Alpha Controls & Trophies ---
         function authorizeUser() {
             const newName = document.getElementById("new-user-input").value.toLowerCase().trim();
             if(newName) { db.ref('allowed_users/' + newName).set(true); alert(`'${newName}' is now permitted to bleed for you.`); document.getElementById("new-user-input").value = ""; }
         }
         function sendAlphaText() { db.ref('alpha/message').set(document.getElementById("alpha-msg").value); }
         function clearAlphaText() { db.ref('alpha/message').set(""); }
-        function grantHp(targetId, amount, subKey) {
-            db.ref('wolves/' + targetId + '/hp').once('value', snap => {
-                db.ref('wolves/' + targetId + '/hp').set((snap.val() || 0) + amount);
-                db.ref('alpha/message').set(`${targetId.replace('wolf_', '')}'s body pleased the Sovereign. Rise.`);
-                deleteSub(subKey);
+        
+        function grantHpAndTrophy(targetId, amount, subKey) {
+            db.ref('wolves/' + targetId).once('value', snap => {
+                let w = snap.val();
+                if(w) {
+                    let newHp = (w.hp || 0) + amount;
+                    let newTrophies = (w.trophies || 0) + 1; // Increment Trophies
+                    
+                    db.ref('wolves/' + targetId).update({ hp: newHp, trophies: newTrophies });
+                    db.ref('alpha/message').set(`${targetId.replace('wolf_', '')}'s body pleased the Sovereign. A Mark of Devotion was awarded.`);
+                    deleteSub(subKey);
+                }
             });
         }
+        
         function deleteSub(subKey) { db.ref('submissions/' + subKey).remove(); }
     </script>
 </body>
