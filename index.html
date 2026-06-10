@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pump & Power | The Secret Iron Club</title>
+    <title>Pump & Power | Iron Syndicate</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 
     <style>
+        /* ==========================================
+           CORE STYLING & THEME
+           ========================================== */
         :root {
             --bg-color: #0d0d12;
             --panel-bg: rgba(20, 20, 25, 0.85);
@@ -28,7 +31,6 @@
             background-attachment: fixed;
         }
 
-        /* Seductive, Dynamic Boxes */
         .glass-panel {
             background: var(--panel-bg);
             border: 1px solid rgba(255, 0, 68, 0.2);
@@ -49,7 +51,6 @@
         h1, h2, h3, h4 { color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; }
         h1 span, h2 span { color: var(--accent); }
 
-        /* Login Screen */
         #auth-container {
             display: flex;
             flex-direction: column;
@@ -82,11 +83,9 @@
 
         button:hover { background: #d40038; }
 
-        /* Main Dashboard Layout */
         #app-container { display: none; padding: 20px; }
         .grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; }
 
-        /* Scalable Chat Box */
         .chat-box {
             resize: vertical;
             overflow: hidden;
@@ -102,19 +101,32 @@
             margin-bottom: 10px;
             padding-right: 10px;
         }
-        .message { margin-bottom: 10px; font-size: 0.9em; }
+        .message { margin-bottom: 10px; font-size: 0.9em; word-wrap: break-word; }
         .message span { color: var(--accent); font-weight: bold; }
-        .message img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
+        .message img { max-width: 100%; border-radius: 8px; margin-top: 5px; border: 1px solid #333; }
         .chat-inputs { display: flex; gap: 10px; }
         
-        /* The Poker Table */
         .poker-table { text-align: center; }
         .pot-display { font-size: 3em; color: var(--accent); margin: 20px 0; text-shadow: 0 0 10px var(--accent); }
         .bet-controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;}
         .bet-btn { width: auto; padding: 10px 20px; flex: 1; min-width: 100px; }
         
-        .stake-warning { color: var(--accent); font-size: 0.8em; font-style: italic; }
+        .stake-warning { color: var(--accent); font-size: 0.8em; font-style: italic; margin-bottom: 15px; display: block;}
 
+        .workout-form { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .workout-form input { padding: 8px; font-size: 0.9em; }
+        .workout-card { background: rgba(0,0,0,0.5); padding: 12px; margin-bottom: 10px; border-left: 2px solid var(--accent); border-radius: 4px; font-size: 0.95em;}
+
+        @media (max-width: 850px) {
+            .grid { grid-template-columns: 1fr; gap: 15px; }
+            header { flex-direction: column; text-align: center; gap: 15px; }
+            header div { text-align: center !important; }
+            #auth-container .glass-panel { width: 90% !important; max-width: 350px; }
+            .chat-box { max-height: 60vh; }
+            .bet-controls { flex-direction: column; }
+            .bet-btn { width: 100%; }
+            #admin-panel { margin-top: 20px; }
+        }
     </style>
 </head>
 <body>
@@ -122,11 +134,11 @@
     <div id="auth-container">
         <div class="glass-panel" style="width: 350px; text-align: center;">
             <h1>Pump <span>&</span> Power</h1>
-            <p class="stake-warning">Discreet. Seductive. Brutal.</p>
+            <span class="stake-warning">Discreet. Seductive. Brutal.</span>
             <input type="email" id="email" placeholder="Email">
             <input type="password" id="password" placeholder="Password">
             <button onclick="login()">Enter the Club</button>
-            <button onclick="register()" style="background: transparent; border: 1px solid var(--accent);">Request Access (Sign Up)</button>
+            <button onclick="register()" style="background: transparent; border: 1px solid var(--accent);">Request Access</button>
         </div>
     </div>
 
@@ -140,22 +152,24 @@
         </header>
 
         <div class="grid">
-            
             <div class="glass-panel">
-                <h3>Global Pump Feed</h3>
-                <p class="text-muted">What everyone is working on...</p>
-                <div id="feed" style="overflow-y: auto; height: 500px;">
-                    <p style="color: #555; font-style: italic;">Awaiting new blood and iron...</p>
+                <h3>The Gym Ad</h3>
+                <p class="text-muted" style="margin-top: 0;">Broadcast your grind.</p>
+                <div class="workout-form">
+                    <input type="text" id="wo-exercise" placeholder="Exercise" style="margin:0; flex: 2; min-width: 120px;">
+                    <input type="number" id="wo-sets" placeholder="Sets" style="margin:0; flex: 1; min-width: 60px;">
+                    <input type="number" id="wo-reps" placeholder="Reps" style="margin:0; flex: 1; min-width: 60px;">
+                    <button onclick="postWorkout()" style="margin:0; flex: 1; padding: 8px; min-width: 80px;">Post</button>
                 </div>
+                <div id="workout-feed" style="overflow-y: auto; height: 400px; border-top: 1px solid #333; padding-top: 15px;"></div>
             </div>
 
             <div>
                 <div class="glass-panel poker-table">
-                    <h3>The Altar (Challenge Table)</h3>
-                    <p class="stake-warning">Fail to reveal, lose the bet.</p>
-                    
+                    <h3>The Altar</h3>
+                    <span class="stake-warning">Fail to reveal, lose the bet.</span>
                     <div id="active-challenge-view" style="display: none;">
-                        <h4 id="challenge-desc">Chest Pump (Tight Tank)</h4>
+                        <h4 id="challenge-desc"></h4>
                         <div class="pot-display">$<span id="pot-amount">0</span></div>
                         <div class="bet-controls">
                             <button class="bet-btn" onclick="placeBet(1)">Call $1</button>
@@ -163,60 +177,44 @@
                             <button class="bet-btn" onclick="placeBet(10)">Raise $10</button>
                             <button class="bet-btn" style="background: #333;" onclick="fold()">Fold</button>
                         </div>
-                        <button style="margin-top: 20px; background: #fff; color: #000;" onclick="revealPhoto()">REVEAL PUMP (Claim Pot)</button>
+                        <button style="margin-top: 20px; background: #fff; color: #000;" onclick="revealPhoto()">REVEAL PUMP</button>
                     </div>
-
                     <div id="create-challenge-view">
                         <h4>Initiate a Blood-Bet</h4>
                         <select id="body-part">
-                            <option value="Chest">Chest Pump</option>
-                            <option value="Glutes">Glute Pump</option>
-                            <option value="Full Body">Full Body (Shredded)</option>
-                            <option value="Arms">Arm Pump (Veins)</option>
+                            <option value="Chest">Chest</option><option value="Glutes">Glutes</option>
+                            <option value="Full Body">Full Body</option><option value="Arms">Arms</option>
                         </select>
                         <select id="seductive-stake">
-                            <option value="Tight Tank Top">in a Tight Tank Top</option>
-                            <option value="Thong">in a Thong</option>
-                            <option value="Shirtless Glistening">Shirtless & Glistening</option>
-                            <option value="Booty Shorts">in Booty Shorts</option>
+                            <option value="Tight Tank">Tight Tank</option><option value="Thong">Thong</option>
+                            <option value="Shirtless">Shirtless</option>
                         </select>
                         <button onclick="initiateChallenge()">Throw the Gauntlet</button>
                     </div>
                 </div>
 
                 <div id="admin-panel" class="glass-panel" style="display: none; border-color: #ffd700; box-shadow: 0 4px 30px rgba(255, 215, 0, 0.2);">
-                    <h3 style="color: #ffd700;">Absolute Power (God Mode)</h3>
-                    <p class="text-muted">You are the architect. Bend the reality of the game.</p>
-                    
-                    <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-                        <button onclick="purgeChat()" style="background: #333; color: #ffd700; margin: 0;">Purge Global Chat</button>
-                        <button onclick="terminateChallenge()" style="background: #333; color: #ffd700; margin: 0;">Nuke Active Challenge</button>
-                    </div>
-
-                    <h4 style="color: #ffd700; margin-top: 20px;">Syndicate Roster</h4>
-                    <div id="admin-user-list" style="max-height: 300px; overflow-y: auto;">
-                        </div>
+                    <h3 style="color: #ffd700;">The Architect</h3>
+                    <button onclick="purgeChat()" style="background: #333; color: #ffd700;">Purge Chat</button>
+                    <button onclick="purgeWorkouts()" style="background: #333; color: #ffd700;">Purge Workouts</button>
+                    <div id="admin-user-list" style="max-height: 200px; overflow-y: auto; margin-top: 10px;"></div>
                 </div>
             </div>
 
             <div class="glass-panel chat-box">
                 <h3>Locker Room</h3>
                 <div class="chat-messages" id="chat-window"></div>
-                
-                <input type="file" id="chat-photo" accept="image/*" style="display:none;" onchange="document.getElementById('photo-label').innerText = 'Photo Selected';">
-                <label id="photo-label" for="chat-photo" style="cursor:pointer; color: var(--accent); margin-bottom:10px; display:block; text-align:center; border: 1px dashed var(--accent); padding: 5px; transition: 0.2s;">+ Attach Photo</label>
-                
+                <input type="file" id="chat-photo" accept="image/*" style="display:none;" onchange="document.getElementById('photo-label').innerText = 'Selected';">
+                <label id="photo-label" for="chat-photo" style="cursor:pointer; color: var(--accent); border: 1px dashed var(--accent); padding: 5px; text-align: center;">+ Photo</label>
                 <div class="chat-inputs">
                     <input type="text" id="chat-input" placeholder="Talk trash..." style="margin:0;">
                     <button onclick="sendChat()" style="width: 80px; margin:0;">Send</button>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
-        // 1. FIREBASE CONFIGURATION (From your Firebase.txt)
         const firebaseConfig = {
             apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
             authDomain: "sovereignhunt.firebaseapp.com",
@@ -226,133 +224,74 @@
             messagingSenderId: "657296200169",
             appId: "1:657296200169:web:22a0f9364344e682083b78"
         };
-
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
-        const storage = firebase.storage();
+        const auth = firebase.auth(); const db = firebase.database(); const storage = firebase.storage();
+        let currentUser = null; let userData = null;
+        const ARCHITECT_EMAIL = "architect@mail.com";
 
-        let currentUser = null;
-        let userData = null;
-
-        // The Master Account Identity
-        const OVERSEER_EMAIL = "jmo335@mail.com";
-
-        // 2. AUTHENTICATION & GOD MODE INJECTION
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
                 document.getElementById('auth-container').style.display = 'none';
                 document.getElementById('app-container').style.display = 'block';
                 document.getElementById('user-display').innerText = user.email.split('@')[0];
-                
-                // Fetch or Create User DB entry
                 db.ref('users/' + user.uid).on('value', snap => {
-                    if(!snap.exists()) {
-                        // All mortals start with $100
-                        db.ref('users/' + user.uid).set({ email: user.email, balance: 100, status: "Warming up" });
-                    } else {
-                        userData = snap.val();
-                        if(userData && userData.balance !== undefined) {
-                            document.getElementById('balance-display').innerText = userData.balance;
-                        }
-                    }
+                    userData = snap.val();
+                    if(userData) document.getElementById('balance-display').innerText = userData.balance;
                 });
-
-                // Trigger God Mode if the logged-in email matches the Overseer
-                if (user.email.toLowerCase() === OVERSEER_EMAIL.toLowerCase()) {
+                if (user.email.toLowerCase() === ARCHITECT_EMAIL.toLowerCase()) {
                     document.getElementById('admin-panel').style.display = 'block';
                     initializeGodMode();
-                } else {
-                    document.getElementById('admin-panel').style.display = 'none';
                 }
-
-                listenToChat();
-                listenToChallenges();
+                listenToChat(); listenToWorkouts(); listenToChallenges();
             } else {
                 document.getElementById('auth-container').style.display = 'flex';
                 document.getElementById('app-container').style.display = 'none';
             }
         });
 
-        function register() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            auth.createUserWithEmailAndPassword(e, p).catch(err => alert(err.message));
+        function register() { auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(err => alert(err.message)); }
+        function login() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(err => alert(err.message)); }
+        function logout() { auth.signOut(); window.location.reload(); }
+
+        function postWorkout() {
+            const exercise = document.getElementById('wo-exercise').value;
+            const sets = document.getElementById('wo-sets').value;
+            const reps = document.getElementById('wo-reps').value;
+            db.ref('workouts').push({ user: currentUser.email.split('@')[0], exercise, sets, reps, time: Date.now() });
         }
 
-        function login() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => alert(err.message));
+        function listenToWorkouts() {
+            db.ref('workouts').on('child_added', snap => {
+                const data = snap.val();
+                const div = document.createElement('div');
+                div.className = "workout-card";
+                div.innerHTML = `<strong>${data.user}</strong>: ${data.exercise} (${data.sets}x${data.reps})`;
+                document.getElementById('workout-feed').prepend(div);
+            });
         }
 
-        function logout() { 
-            auth.signOut(); 
-            window.location.reload(); 
-        }
-
-        // 3. CHAT & PHOTO SYSTEM
         function sendChat() {
             const text = document.getElementById('chat-input').value;
             const file = document.getElementById('chat-photo').files[0];
-            const username = currentUser.email.split('@')[0];
-
             if(file) {
-                document.getElementById('photo-label').innerText = 'Uploading...';
-                const ref = storage.ref('chat_photos/' + Date.now() + '_' + file.name);
-                ref.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(url => {
-                    db.ref('chats').push({ user: username, text: text || "Posted a pump.", imageUrl: url, time: Date.now() });
-                    document.getElementById('chat-photo').value = ""; 
-                    document.getElementById('photo-label').innerText = '+ Attach Photo';
-                });
-            } else if (text) {
-                db.ref('chats').push({ user: username, text: text, time: Date.now() });
-            }
-            document.getElementById('chat-input').value = "";
+                const ref = storage.ref('chat_photos/' + Date.now());
+                ref.put(file).then(s => s.ref.getDownloadURL()).then(url => db.ref('chats').push({ user: currentUser.email.split('@')[0], text, imageUrl: url, time: Date.now() }));
+            } else { db.ref('chats').push({ user: currentUser.email.split('@')[0], text, time: Date.now() }); }
         }
 
         function listenToChat() {
-            db.ref('chats').off('child_added'); // Reset listener
-            document.getElementById('chat-window').innerHTML = ''; 
-
-            db.ref('chats').orderByChild('time').limitToLast(50).on('child_added', snap => {
+            db.ref('chats').on('child_added', snap => {
                 const msg = snap.val();
                 const div = document.createElement('div');
                 div.className = 'message';
-                
-                let content = `<span>${msg.user}:</span> ${msg.text}`;
-                if(msg.imageUrl) content += `<br><img src="${msg.imageUrl}">`;
-                div.innerHTML = content;
-                
+                div.innerHTML = `<span>${msg.user}:</span> ${msg.text} ${msg.imageUrl ? `<br><img src="${msg.imageUrl}">` : ''}`;
                 document.getElementById('chat-window').appendChild(div);
-                document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
-            });
-
-            // Listen for God mode purge
-            db.ref('chats').on('child_removed', snap => {
-                document.getElementById('chat-window').innerHTML = '<div style="color: #ffd700; text-align: center; font-style: italic; margin-top: 20px;">The Overseer has purged the records.</div>';
             });
         }
 
-        // 4. THE POKER / CHALLENGE SYSTEM
         function initiateChallenge() {
-            const part = document.getElementById('body-part').value;
-            const stake = document.getElementById('seductive-stake').value;
-            
-            const challengeRef = db.ref('active_challenge');
-            challengeRef.set({
-                challenger: currentUser.email.split('@')[0],
-                desc: `${part} Pump ${stake}`,
-                pot: 0,
-                status: "betting"
-            });
-
-            db.ref('chats').push({ 
-                user: "SYSTEM", 
-                text: `${currentUser.email.split('@')[0]} threw down the gauntlet: ${part} Pump ${stake}!`, 
-                time: Date.now() 
-            });
+            db.ref('active_challenge').set({ challenger: currentUser.email.split('@')[0], desc: document.getElementById('body-part').value + " " + document.getElementById('seductive-stake').value, pot: 0, status: "betting" });
         }
 
         function listenToChallenges() {
@@ -371,116 +310,33 @@
         }
 
         function placeBet(amount) {
-            if(!userData || userData.balance < amount) { 
-                alert("Insufficient funds. You are weak."); 
-                return; 
-            }
-            
             db.ref('users/' + currentUser.uid).update({ balance: userData.balance - amount });
-            
-            db.ref('active_challenge/pot').transaction(currentPot => {
-                return (currentPot || 0) + amount;
-            });
-
-            db.ref('chats').push({ 
-                user: "SYSTEM", 
-                text: `${currentUser.email.split('@')[0]} threw $${amount} into the pot!`, 
-                time: Date.now() 
-            });
-        }
-
-        function fold() {
-            db.ref('chats').push({ 
-                user: "SYSTEM", 
-                text: `${currentUser.email.split('@')[0]} folded and hid their pump in shame.`, 
-                time: Date.now() 
-            });
+            db.ref('active_challenge/pot').transaction(p => (p || 0) + amount);
         }
 
         function revealPhoto() {
-            alert("Camera triggered! Photo snapped and uploaded. You claim the pot!");
-            
+            alert("Claiming pot...");
             db.ref('active_challenge').once('value').then(snap => {
-                if(snap.exists()) {
-                    const pot = snap.val().pot;
-                    db.ref('users/' + currentUser.uid).update({ balance: userData.balance + pot });
-                    db.ref('active_challenge').remove(); 
-                    
-                    db.ref('chats').push({ 
-                        user: "SYSTEM", 
-                        text: `${currentUser.email.split('@')[0]} revealed their pump and claimed the $${pot} pot!`, 
-                        time: Date.now() 
-                    });
-                }
+                db.ref('users/' + currentUser.uid).update({ balance: userData.balance + snap.val().pot });
+                db.ref('active_challenge').remove();
             });
         }
-
-        // ==========================================
-        // 5. GOD MODE SYSTEM (Law 15 & 34)
-        // ==========================================
 
         function initializeGodMode() {
             db.ref('users').on('value', snap => {
-                const users = snap.val();
-                const rosterContainer = document.getElementById('admin-user-list');
-                rosterContainer.innerHTML = ''; 
-
-                for (let uid in users) {
-                    let uData = users[uid];
-                    let userEmail = uData.email || "Unknown";
-                    
-                    let userDiv = document.createElement('div');
-                    userDiv.style.cssText = "background: rgba(0,0,0,0.5); padding: 10px; margin-bottom: 5px; border-left: 2px solid #ffd700;";
-                    
-                    userDiv.innerHTML = `
-                        <div style="font-size: 0.8em; color: #aaa;">${userEmail} <span style="font-size: 0.7em; color: #555;">(${uid})</span></div>
-                        <div style="display: flex; gap: 5px; align-items: center; margin-top: 5px;">
-                            <span style="color:#ffd700;">$</span>
-                            <input type="number" id="edit_bank_${uid}" value="${uData.balance}" style="margin:0; padding: 5px; width: 80px; height: 35px; border: 1px solid #555; background: #222; color: #fff;">
-                            <button onclick="editUserBank('${uid}')" style="margin:0; padding: 0 10px; height: 35px; width: auto; background: #ffd700; color: #000;">Set Bank</button>
-                            <button onclick="exileUser('${uid}')" style="margin:0; padding: 0 10px; height: 35px; width: auto; background: #800000; color: #fff;">Exile</button>
-                        </div>
-                    `;
-                    rosterContainer.appendChild(userDiv);
-                }
-            });
-        }
-
-        function editUserBank(uid) {
-            const newBalance = document.getElementById(`edit_bank_${uid}`).value;
-            db.ref('users/' + uid).update({ balance: parseInt(newBalance) });
-            db.ref('chats').push({ 
-                user: "THE OVERSEER", 
-                text: `Reality altered. A user's bankroll was adjusted by the creator.`, 
-                time: Date.now() 
-            });
-        }
-
-        function exileUser(uid) {
-            if(confirm("Are you sure you want to crush this user totally? They will be wiped from the game.")) {
-                db.ref('users/' + uid).remove();
-                db.ref('chats').push({ 
-                    user: "THE OVERSEER", 
-                    text: `A user has been exiled to the void.`, 
-                    time: Date.now() 
+                const roster = document.getElementById('admin-user-list');
+                roster.innerHTML = '';
+                snap.forEach(s => {
+                    const u = s.val();
+                    roster.innerHTML += `<div style="font-size:0.7em">${u.email} <button onclick="exileUser('${s.key}')">X</button></div>`;
                 });
-            }
-        }
-
-        function purgeChat() {
-            if(confirm("Erase all history?")) {
-                db.ref('chats').remove();
-            }
-        }
-
-        function terminateChallenge() {
-            db.ref('active_challenge').remove();
-            db.ref('chats').push({ 
-                user: "THE OVERSEER", 
-                text: `The active challenge was terminated by divine decree.`, 
-                time: Date.now() 
             });
         }
+
+        function exileUser(uid) { db.ref('users/' + uid).remove(); }
+        function purgeChat() { db.ref('chats').remove(); }
+        function purgeWorkouts() { db.ref('workouts').remove(); }
+        function terminateChallenge() { db.ref('active_challenge').remove(); }
     </script>
 </body>
 </html>
