@@ -2,223 +2,202 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Sovereign's Hunt 2.0</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pump & Power | The Secret Iron Club</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+
     <style>
         :root {
-            --obsidian: #090a0f;
-            --charcoal: #151a22;
-            --blood-red: #9e0000;
-            --deep-blood: #5a0000;
-            --sovereign-gold: #e6c27a;
-            --flesh: #e3d3c8;
+            --bg-color: #0d0d12;
+            --panel-bg: rgba(20, 20, 25, 0.85);
+            --accent: #ff0044;
+            --text-main: #f0f0f0;
+            --text-muted: #888;
         }
 
-        * { -webkit-user-select: none; user-select: none; box-sizing: border-box; }
-
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Georgia', serif; 
-            background-color: var(--obsidian); color: var(--flesh);
-            overflow: hidden; touch-action: none; 
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: radial-gradient(circle at top right, #3a0011, #0d0d12 40%);
+            background-attachment: fixed;
         }
 
-        /* --- Login Screen --- */
-        #login-screen {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; width: 100vw;
-            background: radial-gradient(circle at center, #1f0000, var(--obsidian));
-            position: absolute; z-index: 1000;
+        /* Seductive, Dynamic Boxes */
+        .glass-panel {
+            background: var(--panel-bg);
+            border: 1px solid rgba(255, 0, 68, 0.2);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .glass-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(255, 0, 68, 0.4);
+            border: 1px solid var(--accent);
         }
 
-        #login-screen h1 { font-size: 3rem; color: var(--blood-red); text-shadow: 0 0 20px rgba(158, 0, 0, 0.8); text-align: center; margin-bottom: 5px; font-weight: normal; text-transform: uppercase; letter-spacing: 3px;}
-        #login-screen p { color: var(--sovereign-gold); font-style: italic; margin-bottom: 30px; text-align: center; padding: 0 20px; font-size: 1.1rem; line-height: 1.5; max-width: 400px;}
+        h1, h2, h3 { color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; }
+        h1 span { color: var(--accent); }
 
-        input[type="text"] {
-            padding: 15px; font-size: 1.2rem; margin: 10px; width: 80%; max-width: 300px;
-            border: 1px solid var(--blood-red); border-radius: 4px; background: rgba(0,0,0,0.6); color: var(--flesh); text-align: center;
-            -webkit-user-select: auto; user-select: auto; font-family: inherit;
+        /* Login Screen */
+        #auth-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
         }
-        input[type="text"]:focus { outline: none; border-color: var(--sovereign-gold); box-shadow: 0 0 10px var(--sovereign-gold); }
+
+        input, button, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: #1a1a24;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        
+        input:focus { outline: none; border-color: var(--accent); }
 
         button {
-            padding: 15px 30px; font-size: 1.1rem; margin-top: 10px;
-            background: linear-gradient(135deg, var(--blood-red), var(--deep-blood)); color: var(--flesh); border: 1px solid var(--sovereign-gold); border-radius: 4px; font-weight: bold;
-            box-shadow: 0px 4px 15px rgba(158, 0, 0, 0.4); text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s; cursor: pointer;
+            background: var(--accent);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
         }
-        button:active { transform: scale(0.95); box-shadow: 0px 0px 5px rgba(158, 0, 0, 0.8); }
 
-        /* --- Game World & Texture --- */
-        #game-viewport { position: relative; width: 100vw; height: 100vh; overflow: hidden; display: none; }
+        button:hover { background: #d40038; }
 
-        #world-map {
-            position: absolute; width: 4000px; height: 4000px;
-            background: linear-gradient(135deg, #11141a 0%, #050505 100%);
-            transition: transform 0.1s linear; transform-origin: top left;
+        /* Main Dashboard Layout */
+        #app-container { display: none; padding: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; }
+
+        /* Scalable Chat Box */
+        .chat-box {
+            resize: vertical;
+            overflow: hidden;
+            min-height: 300px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
         }
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            border-bottom: 1px solid #333;
+            margin-bottom: 10px;
+            padding-right: 10px;
+        }
+        .message { margin-bottom: 10px; font-size: 0.9em; }
+        .message span { color: var(--accent); font-weight: bold; }
+        .message img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
+        .chat-inputs { display: flex; gap: 10px; }
         
-        #world-map::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                radial-gradient(rgba(230, 194, 122, 0.08) 1px, transparent 1px),
-                radial-gradient(rgba(158, 0, 0, 0.04) 1px, transparent 1px);
-            background-size: 30px 30px; background-position: 0 0, 15px 15px;
-            pointer-events: none; z-index: 0;
-        }
-
-        /* Landscape */
-        .boulder {
-            position: absolute;
-            background: radial-gradient(circle at 30% 30%, #1c1c1c 0%, #050505 80%);
-            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8), 10px 10px 30px rgba(0,0,0,0.9);
-            border: 1px solid #222;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-        }
-
-        .moon { position: absolute; top: 2000px; left: 2000px; font-size: 20rem; filter: drop-shadow(0 0 80px rgba(255, 255, 170, 0.4)); opacity: 0.15; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; }
-        .decor { position: absolute; font-size: 2rem; opacity: 0.4; pointer-events: none; z-index: 5; filter: drop-shadow(2px 2px 5px black); }
+        /* The Poker Table */
+        .poker-table { text-align: center; }
+        .pot-display { font-size: 3em; color: var(--accent); margin: 20px 0; text-shadow: 0 0 10px var(--accent); }
+        .bet-controls { display: flex; justify-content: center; gap: 10px; }
+        .bet-btn { width: auto; padding: 10px 20px; }
         
-        .magic-barrier { position: absolute; border: 2px solid var(--blood-red); background: radial-gradient(circle, rgba(158,0,0,0.1), rgba(158,0,0,0.3)); box-shadow: 0 0 50px var(--blood-red), inset 0 0 30px var(--deep-blood); border-radius: 50%; z-index: 15; animation: pulse-barrier 4s infinite alternate; transform: translate(-50%, -50%);}
-        @keyframes pulse-barrier { 0% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.98); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); } }
-        
-        .obelisk { font-size: 3.5rem; position: absolute; transform: translate(-50%, -50%); transition: all 0.5s; filter: drop-shadow(0 0 15px black); z-index: 20; }
-        .obelisk.active { filter: drop-shadow(0 0 40px var(--sovereign-gold)) drop-shadow(0 0 20px var(--blood-red)); animation: throb 2s infinite alternate; }
+        .stake-warning { color: var(--accent); font-size: 0.8em; font-style: italic; }
 
-        /* Entities */
-        .entity { position: absolute; user-select: none; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; transition: left 0.1s linear, top 0.1s linear; z-index: 30; }
-        
-        .avatar { font-size: 3.5rem; position: relative; filter: drop-shadow(2px 5px 5px black); }
-        .alpha-avatar { 
-            font-size: 7rem; 
-            filter: drop-shadow(0px 0px 40px var(--blood-red)) drop-shadow(0px 0px 15px var(--sovereign-gold)); 
-            animation: throb 3s infinite alternate;
-        }
-
-        @keyframes throb { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
-
-        .name-tag { font-size: 0.8rem; font-family: 'Helvetica Neue', sans-serif; font-weight: bold; color: var(--sovereign-gold); margin-top: -5px; background: rgba(0,0,0,0.8); padding: 3px 8px; border-radius: 4px; border: 1px solid #333; letter-spacing: 1px;}
-        .hp-bar { font-size: 0.7rem; font-family: 'Helvetica Neue', sans-serif; background: var(--blood-red); color: white; border-radius: 2px; padding: 2px 8px; margin-top: 4px; font-weight: bold; border: 1px solid black; box-shadow: 0 0 10px rgba(158,0,0,0.5); }
-        .trophy-tag { font-size: 0.9rem; font-weight: bold; color: var(--sovereign-gold); text-shadow: 1px 1px 3px #000; margin-top: 2px; }
-
-        /* Visceral Multi-Tooth Bite */
-        @keyframes jaw-snap {
-            0% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
-            40% { transform: translate(-50%, -50%) scale(0.9); opacity: 1; text-shadow: 0 0 20px red; }
-            60% { transform: translate(-50%, -50%) scale(0.9); opacity: 1; text-shadow: 0 0 30px red; }
-            100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
-        }
-        .biting::after { 
-            content: "🦷🩸🦷\A 🦷"; 
-            white-space: pre; line-height: 0.8; text-align: center;
-            position: absolute; left: 50%; top: 50%; 
-            font-size: 4rem; animation: jaw-snap 0.4s ease-out forwards; 
-            pointer-events: none; z-index: 50; 
-        }
-
-        /* UI Overlays */
-        #low-hp-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, transparent 40%, rgba(158,0,0,0.6) 100%); pointer-events: none; opacity: 0; z-index: 100; transition: opacity 0.5s; animation: pulse-barrier 1s infinite alternate;}
-        #ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
-        #dynamic-text { position: absolute; top: 15%; width: 100%; text-align: center; font-size: 2.2rem; color: var(--sovereign-gold); text-shadow: 0px 0px 15px rgba(230, 194, 122, 0.5), 2px 2px 5px #000; font-style: italic; padding: 0 20px; }
-        #puzzle-status { position: absolute; top: 20px; left: 20px; font-size: 1.1rem; color: var(--blood-red); text-shadow: 1px 1px 5px black; font-weight: bold; letter-spacing: 1px;}
-
-        /* Controls - MOVED UP FOR BETTER ERGONOMICS */
-        #joystick-zone { position: absolute; bottom: 80px; left: 20px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(158,0,0,0.1), rgba(0,0,0,0.8)); border: 2px solid rgba(158,0,0,0.5); border-radius: 50%; pointer-events: auto; touch-action: none; box-shadow: inset 0 0 30px rgba(0,0,0,0.9); }
-        #joystick-stick { position: absolute; top: 50%; left: 50%; width: 55px; height: 55px; background: radial-gradient(circle, var(--blood-red), #2a0000); border: 2px solid #000; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
-
-        #action-btn { position: absolute; bottom: 95px; right: 20px; width: 110px; height: 110px; background: radial-gradient(circle, var(--deep-blood), #1a0000); border: 2px solid var(--blood-red); border-radius: 50%; color: var(--flesh); font-weight: bold; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; pointer-events: auto; box-shadow: 0 0 30px rgba(158,0,0,0.6); touch-action: none; letter-spacing: 1px; font-family: 'Helvetica Neue', sans-serif;}
-        #action-btn:active { transform: scale(0.9); background: radial-gradient(circle, var(--blood-red), var(--deep-blood)); }
-
-        /* Minimizable Alpha Dashboard */
-        #alpha-dashboard-wrapper { position: absolute; top: 20px; right: 20px; z-index: 300; pointer-events: auto; display: none; align-items: flex-end; flex-direction: column; }
-        #alpha-menu-toggle { background: linear-gradient(135deg, var(--sovereign-gold), #8B6508); color: black; border: none; padding: 10px 20px; font-weight: bold; font-size: 1rem; border-radius: 4px; box-shadow: 0 0 15px rgba(230,194,122,0.4); cursor: pointer; text-transform: uppercase; }
-        
-        #alpha-menu { background: rgba(10, 10, 15, 0.95); border: 1px solid var(--sovereign-gold); border-radius: 8px; padding: 15px; width: 300px; max-height: 70vh; overflow-y: auto; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); display: none; }
-        #alpha-menu h3 { color: var(--sovereign-gold); margin: 0 0 15px 0; font-size: 1.3rem; font-style: italic; border-bottom: 1px solid #333; padding-bottom: 5px;}
-        .alpha-input { width: 100%; padding: 10px; margin-bottom: 10px; background: #050505; color: var(--flesh); border: 1px solid #444; border-radius: 4px; -webkit-user-select: auto; user-select: auto; font-family: inherit;}
-        .alpha-input:focus { outline: none; border-color: var(--sovereign-gold); }
-        .alpha-btn { width: 100%; padding: 10px; font-size: 0.9rem; background: #1a1a1a; color: var(--sovereign-gold); border: 1px solid var(--sovereign-gold); margin-bottom: 15px; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;}
-        .alpha-btn:hover { background: #333; }
-        
-        .submission-card { background: #050505; border: 1px solid var(--blood-red); padding: 10px; margin-bottom: 15px; border-radius: 4px; text-align: center; }
-        .submission-img { max-width: 100%; max-height: 250px; border-radius: 4px; margin-bottom: 10px; pointer-events: auto; -webkit-touch-callout: default; border: 1px solid #333;}
-
-        /* Submission Modal */
-        #submission-modal { display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(5, 5, 8, 0.95); z-index: 500; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; padding: 20px; text-align: center; backdrop-filter: blur(5px); }
-        #submission-modal h2 { color: var(--blood-red); font-size: 2.5rem; margin-bottom: 15px; font-weight: normal; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 20px var(--blood-red);}
-        #submission-modal p { color: var(--flesh); font-size: 1.2rem; margin-bottom: 30px; line-height: 1.6; max-width: 500px; font-style: italic; }
-        .custom-file-upload { display: inline-block; padding: 15px 30px; cursor: pointer; background: rgba(230,194,122,0.1); border: 1px solid var(--sovereign-gold); color: var(--sovereign-gold); border-radius: 4px; font-size: 1.2rem; margin-bottom: 20px; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;}
-        .custom-file-upload:hover { background: rgba(230,194,122,0.2); }
-        input[type="file"] { display: none; }
-        #compressor { display: none; }
     </style>
 </head>
 <body>
 
-    <canvas id="compressor"></canvas>
-
-    <div id="login-screen">
-        <h1>The Sovereign's Hunt</h1>
-        <p>A primal ground where Lone Wolves bare their devotion. Strip your ego. Present yourself. Only the chosen may enter to bleed for his gaze.</p>
-        <input type="text" id="login-input" placeholder="Whisper your moniker...">
-        <button onclick="login()">Enter the Hunt</button>
-        <p id="login-error" style="color:var(--blood-red); display:none; font-weight:bold; margin-top:15px; letter-spacing: 1px;"></p>
+    <div id="auth-container">
+        <div class="glass-panel" style="width: 350px; text-align: center;">
+            <h1>Pump <span>&</span> Power</h1>
+            <p class="stake-warning">Discreet. Seductive. Brutal.</p>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Enter the Club</button>
+            <button onclick="register()" style="background: transparent; border: 1px solid var(--accent);">Request Access (Sign Up)</button>
+        </div>
     </div>
 
-    <div id="game-viewport">
-        <div id="world-map">
-            <div class="moon">🌕</div>
-            <div id="barrier" class="magic-barrier" style="display:none;"></div>
-        </div>
-
-        <div id="low-hp-overlay"></div>
-        <div id="ui-overlay">
-            <div id="puzzle-status">Pillar of Submission: <span id="orb-count" style="color:var(--flesh);">0/1</span></div>
-            <div id="dynamic-text"></div>
-            
-            <div id="joystick-zone"><div id="joystick-stick"></div></div>
-            <div id="action-btn">BITE</div>
-        </div>
-
-        <div id="alpha-dashboard-wrapper">
-            <button id="alpha-menu-toggle" onclick="toggleAlphaMenu()">👑 Command Pack</button>
-            <div id="alpha-menu">
-                <h3>The Sovereign's Will</h3>
-                
-                <input type="text" id="new-user-input" class="alpha-input" placeholder="Name of the new submissive...">
-                <button class="alpha-btn" onclick="authorizeUser()">Authorize Wolf</button>
-                
-                <hr style="border-color:#333; margin: 15px 0;">
-                
-                <input type="text" id="alpha-msg" class="alpha-input" placeholder="Speak your demands...">
-                <button class="alpha-btn" onclick="sendAlphaText()">Broadcast</button>
-                <button class="alpha-btn" onclick="clearAlphaText()" style="background:#111; color:#777; border-color:#333;">Silence Pack</button>
-                
-                <hr style="border-color:#333; margin: 15px 0;">
-                
-                <h4 style="margin:0 0 10px 0; color:var(--blood-red); font-style:italic; font-weight:normal;">Offerings of Devotion</h4>
-                <div id="submission-list"></div>
+    <div id="app-container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Iron <span>Syndicate</span></h2>
+            <div style="text-align: right;">
+                <span id="user-display">User</span> | Bankroll: <strong style="color:var(--accent);">$<span id="balance-display">100</span></strong>
+                <button onclick="logout()" style="width: auto; padding: 5px 15px; margin-left: 15px;">Exit</button>
             </div>
-        </div>
-    </div>
+        </header>
 
-    <div id="submission-modal">
-        <h2>Succumb to Lust</h2>
-        <p>You have fallen to your knees. Your body aches, driven by a deep, primal desperation for the Sovereign's attention.<br><br>Offer your flesh. Submit a visual of your devotion to beg for his touch and renewed vitality.</p>
-        <label class="custom-file-upload">
-            <input type="file" id="photo-upload" accept="image/*" onchange="handleFileSelect(event)">
-            📸 Select Body Offering
-        </label>
-        <p id="file-name-display" style="color: var(--sovereign-gold); font-weight:bold; font-size:0.9rem; letter-spacing: 1px;"></p>
-        <button id="final-submit-btn" onclick="uploadAndSubmit()" style="display:none; width:80%; max-width:300px;">Offer to Sovereign</button>
+        <div class="grid">
+            
+            <div class="glass-panel">
+                <h3>Global Pump Feed</h3>
+                <p class="text-muted">What everyone is working on...</p>
+                <div id="feed" style="overflow-y: auto; height: 500px;">
+                    </div>
+            </div>
+
+            <div class="glass-panel poker-table">
+                <h3>The Alter (Challenge Table)</h3>
+                <p class="stake-warning">Fail to reveal, lose the bet.</p>
+                
+                <div id="active-challenge-view" style="display: none;">
+                    <h4 id="challenge-desc">Chest Pump (Tight Tank)</h4>
+                    <div class="pot-display">$<span id="pot-amount">0</span></div>
+                    <div class="bet-controls">
+                        <button class="bet-btn" onclick="placeBet(1)">Call $1</button>
+                        <button class="bet-btn" onclick="placeBet(5)">Raise $5</button>
+                        <button class="bet-btn" onclick="placeBet(10)">Raise $10</button>
+                        <button class="bet-btn" style="background: #333;" onclick="fold()">Fold</button>
+                    </div>
+                    <button style="margin-top: 20px; background: #fff; color: #000;" onclick="revealPhoto()">REVEAL PUMP (Claim Pot)</button>
+                </div>
+
+                <div id="create-challenge-view">
+                    <h4>Initiate a Blood-Bet</h4>
+                    <select id="body-part">
+                        <option value="Chest">Chest Pump</option>
+                        <option value="Glutes">Glute Pump</option>
+                        <option value="Full Body">Full Body (Shredded)</option>
+                    </select>
+                    <select id="seductive-stake">
+                        <option value="Tight Tank Top">in a Tight Tank Top</option>
+                        <option value="Thong">in a Thong</option>
+                        <option value="Shirtless Glistening">Shirtless & Glistening</option>
+                    </select>
+                    <button onclick="initiateChallenge()">Throw the Gauntlet</button>
+                </div>
+            </div>
+
+            <div class="glass-panel chat-box">
+                <h3>Locker Room</h3>
+                <div class="chat-messages" id="chat-window"></div>
+                
+                <input type="file" id="chat-photo" accept="image/*" style="display:none;" onchange="updateFileName()">
+                <label for="chat-photo" style="cursor:pointer; color: var(--accent); margin-bottom:10px; display:block; text-align:center; border: 1px dashed var(--accent); padding: 5px;">+ Attach Photo</label>
+                
+                <div class="chat-inputs">
+                    <input type="text" id="chat-input" placeholder="Talk trash..." style="margin:0;">
+                    <button onclick="sendChat()" style="width: 80px; margin:0;">Send</button>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <script>
-        // --- Firebase Configuration ---
+        // 1. FIREBASE CONFIGURATION (From Firebase.txt)
         const firebaseConfig = {
             apiKey: "AIzaSyCO-n3z7eN3Xj1zmISJJxZvjyER9GBVnLc",
             authDomain: "sovereignhunt.firebaseapp.com",
@@ -228,583 +207,156 @@
             messagingSenderId: "657296200169",
             appId: "1:657296200169:web:22a0f9364344e682083b78"
         };
+
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.database();
+        const storage = firebase.storage();
 
-        // Game Constants & State
-        const MAP_SIZE = 4000;
-        const DEN_POS = { x: 2000, y: 2000 }; 
-        const HIT_RADIUS = 90;
-        const PLAYER_RADIUS = 30;
+        let currentUser = null;
+        let userData = null;
 
-        let role = "", myName = "", myId = "";
-        let myPos = { x: 0, y: 0 };
-        let myHp = 50;
-        let myTrophies = 0;
-        let isDead = false;
-        
-        let obstacles = [];
-        let mobs = []; 
-        
-        // SIMPLIFIED TOTEM: Only 1 Pillar, placed distinctly outside the barrier
-        let obelisks = [
-            { id: 'ob1', x: 2000, y: 1600 } 
-        ];
-        let puzzleState = { ob1: false };
-        let barrierActive = true;
-
-        let moveState = { up: false, down: false, left: false, right: false }; 
-        let joyV = { x: 0, y: 0 }; 
-        let compressedImageBase64 = null;
-        let alphaMenuOpen = false;
-
-        // Init DB basics
-        db.ref('allowed_users').once('value', snap => {
-            if(!snap.exists()) {
-                db.ref('allowed_users/the alpha').set(true);
-                db.ref('allowed_users/amanda').set(true);
-            }
-        });
-        db.ref('puzzle').once('value', snap => {
-            if(!snap.exists()) db.ref('puzzle').set({ ob1: false });
-        });
-
-        // --- Core Auth & State Loading ---
-        function login() {
-            const rawInput = document.getElementById("login-input").value.trim();
-            const inputLower = rawInput.toLowerCase();
-            const errorText = document.getElementById("login-error");
-            if(inputLower === "") return;
-
-            db.ref('allowed_users/' + inputLower).once('value', snap => {
-                if(snap.exists()) {
-                    myName = rawInput;
-                    if(inputLower === "the alpha") { role = "alpha"; myId = "alpha_main"; } 
-                    else { role = "wolf"; myId = "wolf_" + inputLower.replace(/\s+/g, ''); }
-                    
-                    buildLandscape();
-
-                    // Restore or Create Player State (Now includes Trophies)
-                    let refStr = role === "alpha" ? 'alphaLoc' : 'wolves/' + myId;
-                    db.ref(refStr).once('value', userSnap => {
-                        if (userSnap.exists()) {
-                            let data = userSnap.val();
-                            if (role === "alpha") {
-                                myPos.x = data.x; myPos.y = data.y;
-                            } else {
-                                myPos.x = data.x; myPos.y = data.y; 
-                                myHp = data.hp || 50;
-                                myTrophies = data.trophies || 0;
-                            }
-                        } else {
-                            if (role === "alpha") {
-                                myPos = { x: DEN_POS.x, y: DEN_POS.y };
-                            } else {
-                                myPos = getSafeSpawn();
-                                myHp = 50;
-                                myTrophies = 0;
-                            }
-                        }
-
-                        // Save loaded state
-                        if (role === "alpha") {
-                            db.ref('alphaLoc').set(myPos);
-                        } else {
-                            db.ref('wolves/' + myId).update({ name: myName, hp: myHp, x: myPos.x, y: myPos.y, trophies: myTrophies });
-                            spawnMobs();
-                        }
-                        
-                        startGameUI();
-                    });
-
-                } else {
-                    errorText.innerText = "The Sovereign rejects this name. You are not authorized.";
-                    errorText.style.display = "block";
-                }
-            });
-        }
-
-        // --- Safe Spawning Algorithm ---
-        function getSafeSpawn() {
-            let sx, sy;
-            let safe = false;
-            while(!safe) {
-                sx = Math.random() * (MAP_SIZE - 400) + 200;
-                sy = Math.random() * (MAP_SIZE - 400) + 200;
-                if (!isColliding(sx, sy)) safe = true;
-            }
-            return { x: sx, y: sy };
-        }
-
-        // --- UI Initialization ---
-        function startGameUI() {
-            document.getElementById("login-screen").style.display = "none";
-            document.getElementById("game-viewport").style.display = "block";
-            
-            setupControls();
-
-            if (role === "alpha") {
-                document.getElementById("alpha-dashboard-wrapper").style.display = "flex";
-                document.getElementById("action-btn").innerText = "BLESS";
-                document.getElementById("action-btn").style.background = "radial-gradient(circle, #D4AF37, #8B6508)";
-                document.getElementById("action-btn").style.borderColor = "#000";
-                document.getElementById("action-btn").style.color = "black";
-            }
-
-            requestAnimationFrame(gameLoop);
-            listenToDatabase();
-        }
-
-        function buildLandscape() {
-            const map = document.getElementById("world-map");
-            
-            let den = document.createElement("div");
-            den.className = "entity";
-            den.style.left = DEN_POS.x + "px"; den.style.top = DEN_POS.y + "px";
-            den.innerHTML = `<div style="font-size:6rem; filter: drop-shadow(0 0 20px #000);">🕳️</div><div style="color:var(--sovereign-gold); font-weight:bold; font-size:1.8rem; text-shadow: 0 0 15px black; font-style:italic;">The Sovereign's Den</div>`;
-            map.appendChild(den);
-
-            let barrier = document.getElementById("barrier");
-            barrier.style.left = DEN_POS.x + "px";
-            barrier.style.top = DEN_POS.y + "px";
-            barrier.style.width = "600px"; barrier.style.height = "600px";
-            barrier.style.display = "block";
-            obstacles.push({ id: 'barrier', x: DEN_POS.x, y: DEN_POS.y, r: 300 });
-
-            // Render the single Pillar
-            obelisks.forEach(ob => {
-                let el = document.createElement("div");
-                el.className = "obelisk"; el.id = ob.id;
-                el.style.left = ob.x + "px"; el.style.top = ob.y + "px";
-                el.innerHTML = "🗿";
-                map.appendChild(el);
-            });
-
-            for(let i=0; i<40; i++) {
-                let r = Math.random() * 80 + 60; 
-                let rx, ry;
-                let safe = false;
+        // 2. AUTHENTICATION (HTML/PHP principles - Session management)
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                document.getElementById('user-display').innerText = user.email.split('@')[0];
                 
-                while(!safe) {
-                    rx = Math.random() * (MAP_SIZE - 200) + 100;
-                    ry = Math.random() * (MAP_SIZE - 200) + 100;
-                    if (Math.hypot(rx - DEN_POS.x, ry - DEN_POS.y) > 800) {
-                        safe = true;
-                    }
-                }
-                
-                let bEl = document.createElement("div");
-                bEl.className = "boulder";
-                bEl.style.left = rx + "px"; bEl.style.top = ry + "px";
-                bEl.style.width = (r*2) + "px"; bEl.style.height = (r*2) + "px";
-                
-                let br1 = Math.floor(Math.random() * 30 + 35);
-                let br2 = Math.floor(Math.random() * 30 + 35);
-                let br3 = Math.floor(Math.random() * 30 + 35);
-                let br4 = Math.floor(Math.random() * 30 + 35);
-                bEl.style.borderRadius = `${br1}% ${100-br1}% ${br2}% ${100-br2}% / ${br3}% ${br4}% ${100-br4}% ${100-br3}%`;
-                
-                map.appendChild(bEl);
-                obstacles.push({id: 'boulder', x: rx, y: ry, r: r});
-            }
-
-            const flora = ["🌵", "🌿", "🦴", "🥀"];
-            for(let i=0; i<150; i++) {
-                let f = document.createElement("div");
-                f.className = "decor";
-                f.style.left = Math.random() * MAP_SIZE + "px";
-                f.style.top = Math.random() * MAP_SIZE + "px";
-                f.innerText = flora[Math.floor(Math.random() * flora.length)];
-                map.appendChild(f);
-            }
-        }
-
-        // --- Controls ---
-        function setupControls() {
-            const zone = document.getElementById('joystick-zone');
-            const stick = document.getElementById('joystick-stick');
-            const maxRadius = 45; 
-
-            function handleJoy(e) {
-                e.preventDefault(); 
-                if (e.targetTouches.length === 0) {
-                    joyV.x = 0; joyV.y = 0;
-                    stick.style.transform = `translate(-50%, -50%)`;
-                    return;
-                }
-                const touch = e.targetTouches[0];
-                const rect = zone.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                let dx = touch.clientX - centerX;
-                let dy = touch.clientY - centerY;
-                const dist = Math.hypot(dx, dy);
-
-                if (dist > maxRadius) { dx = (dx / dist) * maxRadius; dy = (dy / dist) * maxRadius; }
-                stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-                joyV.x = dx / maxRadius; joyV.y = dy / maxRadius;
-            }
-
-            zone.addEventListener('touchstart', handleJoy, {passive: false});
-            zone.addEventListener('touchmove', handleJoy, {passive: false});
-            zone.addEventListener('touchend', handleJoy, {passive: false});
-            zone.addEventListener('touchcancel', handleJoy, {passive: false});
-
-            document.getElementById('action-btn').addEventListener('touchstart', (e) => { e.preventDefault(); actionButton(); }, {passive: false});
-
-            window.addEventListener('keydown', (e) => {
-                if(e.key === "ArrowUp" || e.key.toLowerCase() === "w") moveState.up = true;
-                if(e.key === "ArrowDown" || e.key.toLowerCase() === "s") moveState.down = true;
-                if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a") moveState.left = true;
-                if(e.key === "ArrowRight" || e.key.toLowerCase() === "d") moveState.right = true;
-                if(e.key === " " || e.key === "Enter") actionButton();
-            });
-            window.addEventListener('keyup', (e) => {
-                if(e.key === "ArrowUp" || e.key.toLowerCase() === "w") moveState.up = false;
-                if(e.key === "ArrowDown" || e.key.toLowerCase() === "s") moveState.down = false;
-                if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a") moveState.left = false;
-                if(e.key === "ArrowRight" || e.key.toLowerCase() === "d") moveState.right = false;
-            });
-        }
-
-        function toggleAlphaMenu() {
-            alphaMenuOpen = !alphaMenuOpen;
-            document.getElementById("alpha-menu").style.display = alphaMenuOpen ? "block" : "none";
-            document.getElementById("alpha-menu-toggle").innerText = alphaMenuOpen ? "✖ Close Commands" : "👑 Command Pack";
-        }
-
-        // --- Database Sync ---
-        function listenToDatabase() {
-            db.ref('alpha/message').on('value', snap => {
-                document.getElementById("dynamic-text").innerText = snap.val() || "";
-            });
-
-            // Simplified Puzzle Sync
-            db.ref('puzzle').on('value', snap => {
-                puzzleState = snap.val() || puzzleState;
-                let count = 0;
-                if(puzzleState.ob1) {
-                    document.getElementById('ob1').classList.add('active');
-                    count++;
-                }
-                document.getElementById("orb-count").innerText = `${count}/1`;
-                
-                if (count >= 1 && barrierActive) {
-                    barrierActive = false;
-                    document.getElementById("barrier").style.display = "none";
-                    document.getElementById("dynamic-text").innerText = "The Den is Open. Present yourself to Him.";
-                    setTimeout(() => document.getElementById("dynamic-text").innerText="", 6000);
-                }
-            });
-
-            db.ref('alphaLoc').on('value', snap => {
-                const pos = snap.val();
-                if (pos) {
-                    let a = document.getElementById("alpha-entity");
-                    if (!a) {
-                        a = document.createElement("div");
-                        a.id = "alpha-entity";
-                        a.className = "entity";
-                        a.innerHTML = `<div class="avatar alpha-avatar">🐺</div><div class="name-tag" style="color:var(--sovereign-gold); font-size:1.1rem; letter-spacing:2px; text-transform:uppercase;">The Sovereign</div>`;
-                        document.getElementById("world-map").appendChild(a);
-                    }
-                    a.style.left = pos.x + "px";
-                    a.style.top = pos.y + "px";
-                }
-            });
-
-            db.ref('wolves').on('value', snap => {
-                const map = document.getElementById("world-map");
-                document.querySelectorAll('.wolf-entity').forEach(e => e.remove());
-                const wolves = snap.val();
-                for (let id in wolves) {
-                    let w = wolves[id];
-                    let el = document.createElement("div");
-                    el.className = "entity wolf-entity";
-                    el.style.left = w.x + "px"; el.style.top = w.y + "px"; el.id = id;
-                    
-                    // Visual Trophy Display
-                    let trophyStr = (w.trophies && w.trophies > 0) ? `<div class="trophy-tag">🏆 x${w.trophies}</div>` : "";
-                    
-                    el.innerHTML = `<div class="avatar">🐺</div><div class="name-tag">${w.name}</div><div class="hp-bar">${w.hp} VITALITY</div>${trophyStr}`;
-                    map.appendChild(el);
-
-                    if (id === myId && role === "wolf") {
-                        myHp = w.hp;
-                        myTrophies = w.trophies || 0;
-                        checkDeathState();
-                        
-                        // Low HP Vignette
-                        if (myHp < 20 && myHp > 0) document.getElementById("low-hp-overlay").style.opacity = 1 - (myHp/20);
-                        else document.getElementById("low-hp-overlay").style.opacity = 0;
-                    }
-                }
-            });
-
-            if (role === "alpha") {
-                db.ref('submissions').on('value', snap => {
-                    const list = document.getElementById("submission-list");
-                    list.innerHTML = "";
-                    const subs = snap.val();
-                    for (let key in subs) {
-                        let sub = subs[key];
-                        list.innerHTML += `
-                        <div class="submission-card" id="sub-${key}">
-                            <p style="margin:0 0 10px 0; font-style:italic; color:var(--flesh);">Body offered by: <span style="color:var(--blood-red); font-weight:bold;">${sub.wolfName}</span></p>
-                            <img src="${sub.image}" class="submission-img">
-                            <button class="alpha-btn" onclick="grantHpAndTrophy('${sub.wolfId}', 50, '${key}')" style="background:var(--deep-blood); border-color:var(--blood-red); color:var(--flesh);">Accept Offering (Give Trophy)</button>
-                            <button class="alpha-btn" onclick="deleteSub('${key}')" style="background:#111; color:#555; border-color:#333;">Reject & Discard</button>
-                        </div>`;
+                // Fetch or Create User DB entry with $100 starting cash
+                db.ref('users/' + user.uid).on('value', snap => {
+                    if(!snap.exists()) {
+                        db.ref('users/' + user.uid).set({ balance: 100, status: "Warming up" });
+                    } else {
+                        userData = snap.val();
+                        document.getElementById('balance-display').innerText = userData.balance;
                     }
                 });
-            }
-        }
 
-        // --- Core Game Loop ---
-        function isColliding(x, y) {
-            if(x < 20 || x > MAP_SIZE - 20 || y < 20 || y > MAP_SIZE - 20) return true;
-            for(let o of obstacles) {
-                if (role === 'alpha' && o.id === 'barrier') continue; 
-                if (!barrierActive && o.id === 'barrier') continue;
-                if(o.r) {
-                    if (Math.hypot(x - o.x, y - o.y) < o.r + PLAYER_RADIUS) return true;
-                }
-            }
-            return false;
-        }
-
-        let lastTime = Date.now();
-        function gameLoop() {
-            let now = Date.now();
-            let dt = (now - lastTime) / 1000;
-            lastTime = now;
-
-            if (!isDead) {
-                let speed = 8;
-                let vx = joyV.x * speed;
-                let vy = joyV.y * speed;
-
-                if (moveState.up) vy -= speed;
-                if (moveState.down) vy += speed;
-                if (moveState.left) vx -= speed;
-                if (moveState.right) vx += speed;
-
-                if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
-                    if (!isColliding(myPos.x + vx, myPos.y)) myPos.x += vx;
-                    if (!isColliding(myPos.x, myPos.y + vy)) myPos.y += vy;
-
-                    if (role === "alpha") db.ref('alphaLoc').set(myPos);
-                    else db.ref('wolves/' + myId).update({ x: myPos.x, y: myPos.y });
-                }
-
-                if(role === "wolf") runMobAI(dt);
-            }
-
-            const map = document.getElementById("world-map");
-            const screenW = window.innerWidth / 2;
-            const screenH = window.innerHeight / 2;
-            map.style.transform = `translate(${screenW - myPos.x}px, ${screenH - myPos.y}px)`;
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        // --- Hostile AI Engine ---
-        function spawnMobs() {
-            const map = document.getElementById("world-map");
-            for(let i=0; i<15; i++) {
-                mobs.push({ id: "mob_r_"+i, type: 'rabbit', x: Math.random()*MAP_SIZE, y: Math.random()*MAP_SIZE, hp: 10, dmg: 1, speed: 150, lastAtk: 0, alive: true });
-            }
-            for(let i=0; i<20; i++) {
-                mobs.push({ id: "mob_s_"+i, type: 'scorpion', x: Math.random()*MAP_SIZE, y: Math.random()*MAP_SIZE, hp: 20, dmg: 5, speed: 220, lastAtk: 0, alive: true });
-            }
-
-            mobs.forEach(m => {
-                let el = document.createElement("div");
-                el.className = "entity"; el.id = m.id;
-                el.innerHTML = m.type === 'rabbit' ? `<div style="font-size:2rem; filter: drop-shadow(0 0 5px #fff);">🐇</div>` : `<div style="font-size:2.5rem; filter: drop-shadow(0 0 10px red);">🦂</div>`;
-                map.appendChild(el);
-            });
-        }
-
-        function runMobAI(dt) {
-            let hpChanged = false;
-            mobs.forEach(m => {
-                if(!m.alive) return;
-                let dist = Math.hypot(m.x - myPos.x, m.y - myPos.y);
-                let el = document.getElementById(m.id);
-                
-                if(m.type === 'scorpion') {
-                    if (dist < 600 && dist > 40) {
-                        m.x += ((myPos.x - m.x) / dist) * m.speed * dt;
-                        m.y += ((myPos.y - m.y) / dist) * m.speed * dt;
-                    } else if (dist <= 40 && Date.now() - m.lastAtk > 1500) {
-                        myHp -= m.dmg; hpChanged = true; m.lastAtk = Date.now();
-                        el.style.transform = "translate(-50%, -50%) scale(1.5)";
-                        setTimeout(()=> el.style.transform = "translate(-50%, -50%) scale(1)", 200);
-                    }
-                } else if(m.type === 'rabbit') {
-                    if (dist < 300 && dist > 40) {
-                        m.x -= ((myPos.x - m.x) / dist) * m.speed * dt;
-                        m.y -= ((myPos.y - m.y) / dist) * m.speed * dt;
-                        m.x = Math.max(50, Math.min(MAP_SIZE-50, m.x));
-                        m.y = Math.max(50, Math.min(MAP_SIZE-50, m.y));
-                    } else if (dist <= 40 && Date.now() - m.lastAtk > 1000) {
-                        myHp -= m.dmg; hpChanged = true; m.lastAtk = Date.now();
-                    }
-                }
-                
-                if (el) { el.style.left = m.x + "px"; el.style.top = m.y + "px"; }
-            });
-
-            if(hpChanged) {
-                db.ref('wolves/' + myId + '/hp').set(myHp);
-                checkDeathState();
-            }
-        }
-
-        // --- Action / Combat ---
-        function actionButton() {
-            if (role === "wolf" && isDead) return;
-
-            const myAvatarDiv = document.getElementById(role === 'alpha' ? 'alpha-entity' : myId);
-            if(myAvatarDiv) {
-                const avatarIcon = myAvatarDiv.querySelector('.avatar');
-                avatarIcon.classList.add("biting");
-                setTimeout(() => avatarIcon.classList.remove("biting"), 400); 
-            }
-
-            if (role === "alpha") {
-                db.ref('wolves').once('value', snap => {
-                    const wolves = snap.val();
-                    for (let id in wolves) {
-                        if (Math.hypot(wolves[id].x - myPos.x, wolves[id].y - myPos.y) <= HIT_RADIUS * 2) {
-                            db.ref('wolves/' + id + '/hp').set(wolves[id].hp + 30);
-                        }
-                    }
-                });
+                listenToChat();
+                listenToChallenges();
             } else {
-                let hpGained = 0;
-                
-                mobs.forEach(m => {
-                    if (m.alive && Math.hypot(m.x - myPos.x, m.y - myPos.y) <= HIT_RADIUS) {
-                        m.hp -= 10;
-                        if(m.hp <= 0) {
-                            m.alive = false;
-                            let el = document.getElementById(m.id);
-                            if(el) el.remove();
-                            hpGained += (m.type === 'scorpion' ? 10 : 5);
-                        }
-                    }
-                });
-
-                db.ref('wolves').once('value', snap => {
-                    const wolves = snap.val();
-                    for (let id in wolves) {
-                        if (id !== myId && Math.hypot(wolves[id].x - myPos.x, wolves[id].y - myPos.y) <= HIT_RADIUS) {
-                            let newHp = wolves[id].hp - 10;
-                            db.ref('wolves/' + id + '/hp').set(newHp);
-                            if(newHp <= 0 && wolves[id].hp > 0) hpGained += 20;
-                        }
-                    }
-                    if (hpGained > 0) db.ref('wolves/' + myId + '/hp').set(myHp + hpGained);
-                });
-
-                // Check single Pillar
-                if (!puzzleState.ob1 && Math.hypot(obelisks[0].x - myPos.x, obelisks[0].y - myPos.y) <= HIT_RADIUS * 1.5) {
-                    db.ref('puzzle/ob1').set(true);
-                }
+                document.getElementById('auth-container').style.display = 'flex';
+                document.getElementById('app-container').style.display = 'none';
             }
+        });
+
+        function register() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            auth.createUserWithEmailAndPassword(e, p).catch(err => alert(err.message));
         }
 
-        // --- Death & Submission ---
-        function checkDeathState() {
-            const nearDen = Math.hypot(myPos.x - DEN_POS.x, myPos.y - DEN_POS.y) < 150;
+        function login() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(e, p).catch(err => alert(err.message));
+        }
+
+        function logout() { auth.signOut(); }
+
+        // 3. CHAT & PHOTO SYSTEM (Dynamic DOM generation)
+        function sendChat() {
+            const text = document.getElementById('chat-input').value;
+            const file = document.getElementById('chat-photo').files[0];
+            const username = currentUser.email.split('@')[0];
+
+            if(file) {
+                // Upload photo first
+                const ref = storage.ref('chat_photos/' + Date.now() + '_' + file.name);
+                ref.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(url => {
+                    db.ref('chats').push({ user: username, text: text, imageUrl: url, time: Date.now() });
+                    document.getElementById('chat-photo').value = ""; // reset
+                });
+            } else if (text) {
+                db.ref('chats').push({ user: username, text: text, time: Date.now() });
+            }
+            document.getElementById('chat-input').value = "";
+        }
+
+        function listenToChat() {
+            db.ref('chats').orderByChild('time').limitToLast(50).on('child_added', snap => {
+                const msg = snap.val();
+                const div = document.createElement('div');
+                div.className = 'message';
+                let content = `<span>${msg.user}:</span> ${msg.text}`;
+                if(msg.imageUrl) content += `<br><img src="${msg.imageUrl}">`;
+                div.innerHTML = content;
+                document.getElementById('chat-window').appendChild(div);
+                document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+            });
+        }
+
+        // 4. THE POKER/BETTING DYNAMICS (The 48 Laws logic)
+        let currentChallengeId = null;
+
+        function initiateChallenge() {
+            const part = document.getElementById('body-part').value;
+            const stake = document.getElementById('seductive-stake').value;
             
-            if (myHp <= 0 || (nearDen && !barrierActive)) {
-                isDead = true;
-                document.getElementById("joystick-zone").style.display = "none";
-                document.getElementById("action-btn").style.display = "none";
-                document.getElementById("submission-modal").style.display = "flex";
-                document.getElementById("low-hp-overlay").style.display = "none";
-            }
-        }
-
-        // --- Photo Compression & Upload ---
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            document.getElementById("file-name-display").innerText = "Preparing offering...";
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.getElementById('compressor');
-                    const ctx = canvas.getContext('2d');
-                    const MAX_DIM = 600;
-                    let width = img.width, height = img.height;
-                    if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; } 
-                    else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
-                    canvas.width = width; canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    document.getElementById("file-name-display").innerText = "Body documented. Ready to kneel.";
-                    document.getElementById("final-submit-btn").style.display = "block";
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function uploadAndSubmit() {
-            if (!compressedImageBase64) return;
-            document.getElementById("final-submit-btn").innerText = "Submitting...";
-            db.ref('submissions').push({
-                wolfId: myId, wolfName: myName, image: compressedImageBase64, timestamp: Date.now()
-            }).then(() => {
-                // Post-Offering Respawn
-                document.getElementById("submission-modal").style.display = "none";
-                document.getElementById("joystick-zone").style.display = "block";
-                document.getElementById("action-btn").style.display = "flex";
-                
-                myHp = 50; 
-                myPos = getSafeSpawn(); 
-                isDead = false;
-                
-                db.ref('wolves/' + myId).update({ hp: myHp, x: myPos.x, y: myPos.y });
-                
-                // Reset form
-                compressedImageBase64 = null;
-                document.getElementById("final-submit-btn").style.display = "none";
-                document.getElementById("file-name-display").innerText = "";
-                document.getElementById("final-submit-btn").innerText = "Offer to Sovereign";
-                
-                alert("Your offering has been cast into the shadows. You are reborn to hunt while He judges you.");
+            // "Court Attention" - Create the main spectacle
+            const challengeRef = db.ref('active_challenge');
+            challengeRef.set({
+                challenger: currentUser.email.split('@')[0],
+                desc: `${part} Pump ${stake}`,
+                pot: 0,
+                status: "betting"
             });
         }
 
-        // --- Alpha Controls & Trophies ---
-        function authorizeUser() {
-            const newName = document.getElementById("new-user-input").value.toLowerCase().trim();
-            if(newName) { db.ref('allowed_users/' + newName).set(true); alert(`'${newName}' is now permitted to bleed for you.`); document.getElementById("new-user-input").value = ""; }
-        }
-        function sendAlphaText() { db.ref('alpha/message').set(document.getElementById("alpha-msg").value); }
-        function clearAlphaText() { db.ref('alpha/message').set(""); }
-        
-        function grantHpAndTrophy(targetId, amount, subKey) {
-            db.ref('wolves/' + targetId).once('value', snap => {
-                let w = snap.val();
-                if(w) {
-                    let newHp = (w.hp || 0) + amount;
-                    let newTrophies = (w.trophies || 0) + 1; // Increment Trophies
-                    
-                    db.ref('wolves/' + targetId).update({ hp: newHp, trophies: newTrophies });
-                    db.ref('alpha/message').set(`${targetId.replace('wolf_', '')}'s body pleased the Sovereign. A Mark of Devotion was awarded.`);
-                    deleteSub(subKey);
+        function listenToChallenges() {
+            db.ref('active_challenge').on('value', snap => {
+                const data = snap.val();
+                if(data && data.status === "betting") {
+                    document.getElementById('create-challenge-view').style.display = 'none';
+                    document.getElementById('active-challenge-view').style.display = 'block';
+                    document.getElementById('challenge-desc').innerText = `${data.challenger} challenged: ${data.desc}`;
+                    document.getElementById('pot-amount').innerText = data.pot;
+                } else {
+                    document.getElementById('create-challenge-view').style.display = 'block';
+                    document.getElementById('active-challenge-view').style.display = 'none';
                 }
             });
         }
-        
-        function deleteSub(subKey) { db.ref('submissions/' + subKey).remove(); }
+
+        function placeBet(amount) {
+            if(userData.balance < amount) { alert("Insufficient funds. You are weak."); return; }
+            
+            // Deduct from user, add to pot
+            db.ref('users/' + currentUser.uid).update({ balance: userData.balance - amount });
+            
+            db.ref('active_challenge/pot').transaction(currentPot => {
+                return (currentPot || 0) + amount;
+            });
+
+            // Announce bet in chat
+            db.ref('chats').push({ 
+                user: "SYSTEM", 
+                text: `${currentUser.email.split('@')[0]} threw $${amount} into the pot!`, 
+                time: Date.now() 
+            });
+        }
+
+        function fold() {
+            db.ref('chats').push({ 
+                user: "SYSTEM", 
+                text: `${currentUser.email.split('@')[0]} folded and hid their pump in shame.`, 
+                time: Date.now() 
+            });
+        }
+
+        function revealPhoto() {
+            // In a full app, this would open a camera/file input, upload, and grant the pot.
+            alert("Camera triggered! Photo snapped and uploaded. You claim the pot!");
+            
+            // Give pot to revealer
+            db.ref('active_challenge').once('value').then(snap => {
+                const pot = snap.val().pot;
+                db.ref('users/' + currentUser.uid).update({ balance: userData.balance + pot });
+                db.ref('active_challenge').remove(); // Reset table
+            });
+        }
     </script>
 </body>
 </html>
